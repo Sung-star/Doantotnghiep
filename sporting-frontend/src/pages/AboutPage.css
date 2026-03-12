@@ -1,0 +1,47 @@
+/* Khoảng cách chữ cho tiêu đề phụ */
+.tracking-wider {
+  letter-spacing: 0.1em;
+}
+
+/* Hiệu ứng zoom ảnh mượt mà */
+.img-wrapper {
+  transition: all 0.5s ease;
+}
+.hover-zoom {
+  transition: transform 0.8s ease;
+}
+.img-wrapper:hover .hover-zoom {
+  transform: scale(1.05);
+}
+
+/* Hiệu ứng thẻ Giá Trị nâng lên khi hover */
+.value-card {
+  transition: all 0.3s ease-in-out;
+  cursor: default;
+}
+.value-card:hover {
+  transform: translateY(-10px);
+  box-shadow: 0 1rem 3rem rgba(0,0,0,0.1) !important;
+}
+
+/* Hiệu ứng nổi bồng bềnh (nhịp thở) cho Box huy hiệu */
+.bounce-anim {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes float {
+  0% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-15px);
+  }
+  100% {
+    transform: translateY(0px);
+  }
+}
+
+/* Đảm bảo content đè lên background trang trí của banner CTA */
+.z-index-1 {
+  z-index: 1;
+}

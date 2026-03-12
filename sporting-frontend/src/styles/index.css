@@ -1,0 +1,71 @@
+:root {
+  --admin-primary: #3b82f6;
+  --admin-bg: #f8fafc;
+  --sidebar-width: 260px;
+  font-family: 'Inter', system-ui, sans-serif;
+  line-height: 1.5;
+}
+
+/* KHÚC NÀY ĐỂ FIX LỖI "NẰM GIỮA" */
+#root {
+  width: 100% !important;
+  max-width: none !important; /* Xóa bỏ giới hạn 1280px của Vite */
+  margin: 0 !important;
+  padding: 0 !important;
+}
+
+body {
+  margin: 0;
+  padding: 0;
+  background-color: var(--admin-bg);
+  color: #1e293b;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* 2. Cấu trúc Layout tràn màn hình */
+.admin-layout {
+  display: flex;
+  width: 100vw; /* Ép rộng hết cỡ màn hình */
+  min-height: 100vh;
+}
+
+.modern-sidebar {
+  width: var(--sidebar-width);
+  background: #0f172a; /* Slate 900 cực sang */
+  flex-shrink: 0; /* Không cho sidebar bị co lại */
+  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
+}
+
+.admin-main {
+  flex-grow: 1; /* Chiếm toàn bộ phần còn lại bên phải */
+  display: flex;
+  flex-direction: column;
+}
+
+/* 3. Nâng cấp thẩm mỹ Card & Ảnh */
+.card-modern {
+  background: #ffffff;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.card-modern:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+}
+
+.img-container {
+  aspect-ratio: 3/4;
+  overflow: hidden;
+  border-radius: 8px;
+  background: #f1f5f9;
+}
+
+.img-container img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover; /* Chặn việc ảnh bị méo */
+}

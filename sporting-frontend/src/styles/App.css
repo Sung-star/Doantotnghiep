@@ -1,0 +1,138 @@
+#root {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 2rem;
+  text-align: center;
+}
+
+.logo {
+  height: 6em;
+  padding: 1.5em;
+  will-change: filter;
+  transition: filter 300ms;
+}
+.logo:hover {
+  filter: drop-shadow(0 0 2em #646cffaa);
+}
+.logo.react:hover {
+  filter: drop-shadow(0 0 2em #61dafbaa);
+}
+
+@keyframes logo-spin {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  a:nth-of-type(2) .logo {
+    animation: logo-spin infinite 20s linear;
+  }
+}
+
+.card {
+  padding: 2em;
+}
+
+.read-the-docs {
+  color: #888;
+}
+/* Admin Layout */
+.admin-layout {
+  min-height: 100vh;
+}
+
+.admin-layout .nav-pills .nav-link {
+  color: #495057;
+  padding: 0.75rem 1rem;
+  border-radius: 0.5rem;
+}
+
+.admin-layout .nav-pills .nav-link:hover {
+  background-color: #e9ecef;
+}
+
+.admin-layout .nav-pills .nav-link.active {
+  background-color: #0d6efd;
+  color: white;
+}
+
+/* Responsive adjustments */
+@media (max-width: 767.98px) {
+  .admin-layout .position-fixed {
+    position: relative !important;
+    height: auto !important;
+    width: 100% !important;
+  }
+}
+
+/* Loading spinner */
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 300px;
+}
+
+/* Product card hover effects */
+.product-card {
+  transition: all 0.3s ease;
+}
+
+.product-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.1);
+}
+
+/* Form styles */
+.form-control:focus {
+  border-color: #0d6efd;
+  box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+/* Button styles */
+.btn-primary {
+  background-color: #0d6efd;
+  border-color: #0d6efd;
+}
+
+.btn-primary:hover {
+  background-color: #0b5ed7;
+  border-color: #0a58ca;
+}
+
+/* Alert styles */
+.alert-success {
+  background-color: #d1e7dd;
+  border-color: #badbcc;
+  color: #0f5132;
+}
+
+.alert-danger {
+  background-color: #f8d7da;
+  border-color: #f5c2c7;
+  color: #842029;
+}
+.payment-methods img {
+    max-width: 60px; /* Giới hạn chiều rộng tối đa */
+    filter: grayscale(100%);
+    transition: all 0.3s ease;
+    display: inline-block;
+  }
+
+  .payment-methods img:hover {
+    filter: grayscale(0%);
+    transform: scale(1.1);
+  }
+
+  /* Đảm bảo footer không bị vỡ trên mobile */
+  @media (max-width: 768px) {
+    .payment-methods {
+      margin-top: 1rem;
+      justify-content: center !important;
+    }
+  }
+  
