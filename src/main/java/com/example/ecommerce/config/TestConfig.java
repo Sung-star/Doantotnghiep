@@ -30,7 +30,7 @@ import com.example.ecommerce.repositories.RoleRepository;
 import com.example.ecommerce.repositories.UserRepository;
 
 @Configuration
-@Profile("test")
+//@Profile("test")
 public class TestConfig implements CommandLineRunner {
 
     @Autowired
@@ -188,6 +188,12 @@ public class TestConfig implements CommandLineRunner {
 
     @Override
     public void run(String... args) throws Exception {
+        
+        // Kiểm tra xen dữ liệu test đã được sinh ra chưa
+        if (userRepository.count() > 0) {
+            System.out.println("✅ Dữ liệu test đã tồn tại. Bỏ qua bước sinh dữ liệu để tránh bị lặp (duplicate).");
+            return;
+        }
 
         // 0. TẠO QUYỀN (ROLES)
         Role adminRole = new Role(null, "ROLE_ADMIN");

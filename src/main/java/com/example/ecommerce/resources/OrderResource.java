@@ -26,7 +26,7 @@ public class OrderResource {
     }
 	
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Order> findById(@PathVariable Long id){
+    public ResponseEntity<Order> findById(@PathVariable("id") Long id){
         Order order = service.findById(id);
         return ResponseEntity.ok().body(order);
     }
@@ -40,14 +40,14 @@ public class OrderResource {
 
     // XÓA ĐƠN HÀNG (Admin/User bấm nút Thùng rác)
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     // CẬP NHẬT TRẠNG THÁI (Nút Thu tiền & Dropdown trạng thái)
     @PutMapping(value = "/{id}/status")
-    public ResponseEntity<Order> updateStatus(@PathVariable Long id, @RequestBody String status) {
+    public ResponseEntity<Order> updateStatus(@PathVariable("id") Long id, @RequestBody String status) {
         try {
             // SỬA LỖI QUAN TRỌNG: Làm sạch chuỗi gửi từ Axios/React
             // Ví dụ: ""PAID"" -> "PAID"

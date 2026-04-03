@@ -5,15 +5,20 @@ import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.Table;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.JoinColumn;
 
 @Entity
 @Table(name = "categories")
+@JsonIgnoreProperties({"hibernateLazyInitializer", "handler"})
 public class Category implements Serializable {
     
     private static final long serialVersionUID = 1L;
@@ -23,6 +28,14 @@ public class Category implements Serializable {
     private Long id;
     private String name;
     private String description; // Bổ sung trường này
+
+    @ManyToOne
+    @JoinColumn(name = "parent_id")
+    private Category parent;
+
+    @JsonIgnore
+    @OneToMany(mappedBy = "parent")
+    private Set<Category> children = new HashSet<>();
 
     @JsonIgnore
     @ManyToMany(mappedBy = "categories")
@@ -60,6 +73,22 @@ public class Category implements Serializable {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+    
+    public Category getParent() {
+        return parent;
+    }
+
+    public void setParent(Category parent) {
+        this.parent = parent;
+    }
+
+    public Set<Category> getChildren() {
+        return children;
+    }
+
+    public void setChildren(Set<Category> children) {
+        this.children = children;
     }
     
     public Set<Product> getProducts() {

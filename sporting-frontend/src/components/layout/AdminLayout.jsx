@@ -2,10 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { Outlet, useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import instance from '../../api/axiosConfig';
+import { useLocation } from 'react-router-dom';
 
 const AdminLayout = () => {
     const { loading, logout } = useAuth();
     const navigate = useNavigate();
+    const location = useLocation();
+    const isDashboard = location.pathname === '/admin';
 
     // ── Kiểm tra quyền ──────────────────────────────────────────
     const isAdminSession = localStorage.getItem('isAdminSession') === 'true';
@@ -352,37 +355,39 @@ const AdminLayout = () => {
                 </header>
 
                 {/* ── STAT CARDS (số liệu thật) ── */}
-                <div className="px-4 pt-4 pb-0">
-                    <div className="row g-3">
-                        {statCards.map((card, i) => (
-                            <div key={i} className="col-md-3">
-                                <div className="card border-0 shadow-sm text-white h-100"
-                                     style={{ background: card.gradient, borderRadius: '14px' }}>
-                                    <div className="card-body py-3 px-4">
-                                        <div className="d-flex justify-content-between align-items-center">
-                                            <div>
-                                                <div className="text-white text-opacity-75 mb-1"
-                                                     style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.04em' }}>
-                                                    {card.label.toUpperCase()}
-                                                </div>
-                                                {card.loading ? (
-                                                    <div className="placeholder-glow">
-                                                        <span className="placeholder col-6 rounded" style={{ height: '32px' }} />
-                                                    </div>
-                                                ) : (
-                                                    <h3 className="mb-0 fw-bold" style={{ fontSize: '1.7rem' }}>
-                                                        {card.value}
-                                                    </h3>
-                                                )}
-                                            </div>
-                                            <i className={`bi ${card.icon} fs-2 opacity-50`}></i>
-                                        </div>
+{isDashboard && (
+    <div className="px-4 pt-4 pb-0">
+        <div className="row g-3">
+            {statCards.map((card, i) => (
+                <div key={i} className="col-md-3">
+                    <div className="card border-0 shadow-sm text-white h-100"
+                         style={{ background: card.gradient, borderRadius: '14px' }}>
+                        <div className="card-body py-3 px-4">
+                            <div className="d-flex justify-content-between align-items-center">
+                                <div>
+                                    <div className="text-white text-opacity-75 mb-1"
+                                         style={{ fontSize: '12px', fontWeight: 600, letterSpacing: '0.04em' }}>
+                                        {card.label.toUpperCase()}
                                     </div>
+                                    {card.loading ? (
+                                        <div className="placeholder-glow">
+                                            <span className="placeholder col-6 rounded" style={{ height: '32px' }} />
+                                        </div>
+                                    ) : (
+                                        <h3 className="mb-0 fw-bold" style={{ fontSize: '1.7rem' }}>
+                                            {card.value}
+                                        </h3>
+                                    )}
                                 </div>
+                                <i className={`bi ${card.icon} fs-2 opacity-50`}></i>
                             </div>
-                        ))}
+                        </div>
                     </div>
                 </div>
+            ))}
+        </div>
+    </div>
+)}
 
                 {/* Main Content (Outlet) */}
                 <div className="flex-grow-1 overflow-auto p-4">

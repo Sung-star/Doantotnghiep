@@ -48,13 +48,13 @@ public ResponseEntity<Page<Product>> findAll(
 }
     
     @GetMapping(value = "/{id}")
-    public ResponseEntity<Product> findById(@PathVariable Long id){
+    public ResponseEntity<Product> findById(@PathVariable("id") Long id){
          return ResponseEntity.ok().body(service.findById(id));
     }
 
     // --- Endpoint mới để lấy các phiên bản màu khác ---
     @GetMapping(value = "/{id}/variants")
-    public ResponseEntity<List<Product>> findVariants(@PathVariable Long id) {
+    public ResponseEntity<List<Product>> findVariants(@PathVariable("id") Long id) {
         return ResponseEntity.ok().body(service.findVariants(id));
     }
 
@@ -64,12 +64,12 @@ public ResponseEntity<Page<Product>> findAll(
     }
 
     @PutMapping(value = "/{id}")
-    public ResponseEntity<Product> update(@PathVariable Long id, @RequestBody Product obj) {
+    public ResponseEntity<Product> update(@PathVariable("id") Long id, @RequestBody Product obj) {
         return ResponseEntity.ok().body(service.update(id, obj));
     }
 
     @DeleteMapping(value = "/{id}")
-    public ResponseEntity<Void> delete(@PathVariable Long id) {
+    public ResponseEntity<Void> delete(@PathVariable("id") Long id) {
         service.delete(id);
         return ResponseEntity.noContent().build();
     }
