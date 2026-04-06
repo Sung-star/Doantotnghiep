@@ -4,7 +4,21 @@ import {
     FaEdit, FaTrash, FaPlus, FaSave, FaTimes, 
     FaChevronLeft, FaChevronRight, FaSearch, FaUpload, FaPlusCircle
 } from 'react-icons/fa';
-
+ 
+// =============================================
+// DANH SÁCH CỐ ĐỊNH - Chỉnh sửa tại đây
+// =============================================
+const BRAND_OPTIONS = [
+    'Nike', 'Adidas', 'Puma', 'New Balance', 'Converse',
+    'Vans', 'Reebok', 'Jordan', 'Fila', 'Biti\'s'
+];
+ 
+const COLOR_OPTIONS = [
+    'Đen', 'Trắng', 'Đỏ', 'Xanh dương', 'Xanh lá',
+    'Vàng', 'Cam', 'Hồng', 'Tím', 'Xám', 'Be', 'Nâu'
+];
+// =============================================
+ 
 const Products = () => {
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
@@ -14,20 +28,18 @@ const Products = () => {
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
     const [imagePreview, setImagePreview] = useState(null);
-
-    // --- State cho form đã được cập nhật ---
+ 
     const initialFormData = {
         name: '', price: '', imgUrl: '', description: '', 
         categoryId: '', brand: '', color: '',
-        productSizes: [] // Bắt đầu với mảng rỗng
+        productSizes: []
     };
     const [formData, setFormData] = useState(initialFormData);
     const [isShoeCategory, setIsShoeCategory] = useState(false);
-
-    // State cho việc thêm size/số lượng động
+ 
     const [currentSize, setCurrentSize] = useState('');
     const [currentQuantity, setCurrentQuantity] = useState(0);
-
+ 
     const loadData = async () => {
         try {
             const url = `/products?page=${page}&size=5&name=${encodeURIComponent(searchTerm)}`;
@@ -40,26 +52,23 @@ const Products = () => {
             setCategories(cRes.data || []);
         } catch (err) { console.error("Lỗi tải dữ liệu:", err); }
     };
-
+ 
     useEffect(() => { loadData(); }, [page]);
-
+ 
     const handleSearch = (e) => {
         e.preventDefault();
         setPage(0);
         loadData();
     };
-
-    // --- Cập nhật logic khi chọn category ---
+ 
     const handleCategoryChange = (e) => {
         const selectedCategoryId = e.target.value;
-        setFormData({ ...formData, categoryId: selectedCategoryId, productSizes: [] }); // Reset size khi đổi category
-
-        // QUAN TRỌNG: Thay "Giày" bằng tên danh mục giày của bạn nếu khác
-        const isShoe = categories.find(c => c.id.toString() === selectedCategoryId)?.name === "Giày";
+        setFormData({ ...formData, categoryId: selectedCategoryId, productSizes: [] });
+        const selectedCat = categories.find(c => c.id.toString() === selectedCategoryId);
+        const isShoe = selectedCat && (selectedCat.name.toLowerCase().includes("giày") || selectedCat.parent?.name.toLowerCase().includes("giày"));
         setIsShoeCategory(isShoe);
     };
     
-    // --- Logic thêm một cặp size-số lượng vào formData ---
     const handleAddSize = () => {
         if (!currentSize || formData.productSizes.some(ps => ps.size === currentSize)) {
             alert("Size không được rỗng hoặc đã tồn tại!");
@@ -71,14 +80,13 @@ const Products = () => {
         setCurrentQuantity(0);
     };
     
-    // --- Logic xóa một cặp size-số lượng ---
     const handleRemoveSize = (sizeToRemove) => {
         setFormData({
             ...formData,
             productSizes: formData.productSizes.filter(ps => ps.size !== sizeToRemove)
         });
     };
-
+ 
     const handleImageChange = (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -90,17 +98,16 @@ const Products = () => {
             reader.readAsDataURL(file);
         }
     };
-
-    // --- Cập nhật handleEdit ---
+ 
     const handleEdit = (p) => {
         setEditingId(p.id);
         setImagePreview(p.imgUrl);
         
         const categoryId = p.categories?.[0]?.id || '';
-        // QUAN TRỌNG: Thay "Giày" bằng tên danh mục giày của bạn nếu khác
-        const isShoe = categories.find(c => c.id.toString() === categoryId.toString())?.name === "Giày";
+        const selectedCat = categories.find(c => c.id.toString() === categoryId.toString());
+        const isShoe = selectedCat && (selectedCat.name.toLowerCase().includes("giày") || selectedCat.parent?.name.toLowerCase().includes("giày"));
         setIsShoeCategory(isShoe);
-
+ 
         setFormData({
             name: p.name, price: p.price, imgUrl: p.imgUrl, 
             description: p.description || '',
@@ -110,7 +117,7 @@ const Products = () => {
         });
         setShowForm(true);
     };
-
+ 
     const handleSubmit = async (e) => {
         e.preventDefault();
         const payload = { ...formData, categories: [{ id: formData.categoryId }] };
@@ -125,7 +132,7 @@ const Products = () => {
             loadData();
         } catch (err) { alert("Lỗi khi lưu sản phẩm!"); }
     };
-
+ 
     const resetForm = () => {
         setShowForm(false);
         setEditingId(null);
@@ -135,7 +142,7 @@ const Products = () => {
         setCurrentSize('');
         setCurrentQuantity(0);
     };
-
+ 
     return (
         <div className="container-fluid p-4 bg-light min-vh-100">
             {/* Header + Search Bar */}
@@ -153,7 +160,7 @@ const Products = () => {
                     {!showForm && (<button className="btn btn-primary shadow-sm px-4 fw-bold rounded-pill" onClick={() => setShowForm(true)}><FaPlus className="me-2" /> THÊM MỚI</button>)}
                 </div>
             </div>
-
+ 
             {/* Form Thêm/Sửa */}
             {showForm && (
                 <div className="card border-0 shadow-lg mb-5" style={{ borderRadius: '20px' }}>
@@ -167,35 +174,113 @@ const Products = () => {
                                 {/* Cột bên trái: Ảnh */}
                                 <div className="col-md-4">
                                     <div className="border-dashed rounded-4 p-3 text-center bg-light position-relative" style={{ border: '2px dashed #ccc', minHeight: '300px' }}>
-                                        {imagePreview ? <img src={imagePreview} className="img-fluid rounded shadow-sm mb-2" style={{ maxHeight: '250px' }} alt="Preview" />
-                                         : <div className="py-5 text-muted"><FaUpload size={40} className="mb-2 opacity-50" /><p className="small">Chưa có ảnh</p></div>}
+                                        {imagePreview 
+                                            ? <img src={imagePreview} className="img-fluid rounded shadow-sm mb-2" style={{ maxHeight: '250px' }} alt="Preview" />
+                                            : <div className="py-5 text-muted"><FaUpload size={40} className="mb-2 opacity-50" /><p className="small">Chưa có ảnh</p></div>
+                                        }
                                         <input type="file" className="form-control form-control-sm" accept="image/*" onChange={handleImageChange} />
                                         <label className="small text-secondary mt-2 d-block">Chọn ảnh từ thiết bị</label>
                                     </div>
                                 </div>
-
+ 
                                 {/* Cột bên phải: Thông tin */}
                                 <div className="col-md-8">
                                     <div className="row g-3">
-                                        <div className="col-12"><label className="small fw-bold text-secondary">Tên sản phẩm</label><input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} /></div>
-                                        <div className="col-md-6"><label className="small fw-bold text-secondary">Thương hiệu</label><input type="text" className="form-control" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})} /></div>
-                                        <div className="col-md-6"><label className="small fw-bold text-secondary">Màu sắc</label><input type="text" className="form-control" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} /></div>
-                                        <div className="col-md-6"><label className="small fw-bold text-secondary">Giá bán (đ)</label><input type="number" className="form-control" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} /></div>
-                                        <div className="col-md-6"><label className="small fw-bold text-secondary">Danh mục</label>
-                                            <select className="form-select" required value={formData.categoryId} onChange={handleCategoryChange}>
-                                                <option value="">Chọn loại...</option>
-                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
+                                        {/* Tên sản phẩm */}
+                                        <div className="col-12">
+                                            <label className="small fw-bold text-secondary">Tên sản phẩm</label>
+                                            <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                        </div>
+ 
+                                        {/* Thương hiệu - dropdown */}
+                                        <div className="col-md-6">
+                                            <label className="small fw-bold text-secondary">Thương hiệu</label>
+                                            <select
+                                                className="form-select"
+                                                value={formData.brand}
+                                                onChange={e => setFormData({...formData, brand: e.target.value})}
+                                            >
+                                                <option value="">-- Chọn thương hiệu --</option>
+                                                {BRAND_OPTIONS.map(b => (
+                                                    <option key={b} value={b}>{b}</option>
+                                                ))}
                                             </select>
                                         </div>
-                                        
-                                        {/* --- Khu vực nhập Size/Số lượng động --- */}
+ 
+                                        {/* Màu sắc - dropdown */}
+                                        <div className="col-md-6">
+                                            <label className="small fw-bold text-secondary">Màu sắc</label>
+                                            <select
+                                                className="form-select"
+                                                value={formData.color}
+                                                onChange={e => setFormData({...formData, color: e.target.value})}
+                                            >
+                                                <option value="">-- Chọn màu sắc --</option>
+                                                {COLOR_OPTIONS.map(c => (
+                                                    <option key={c} value={c}>{c}</option>
+                                                ))}
+                                            </select>
+                                        </div>
+ 
+                                        {/* Giá bán */}
+                                        <div className="col-md-6">
+                                            <label className="small fw-bold text-secondary">Giá bán (đ)</label>
+                                            <input type="number" className="form-control" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
+                                        </div>
+ 
+                                        {/* Danh mục */}
+                                        <div className="col-md-6">
+                                            <label className="small fw-bold text-secondary">Danh mục</label>
+                                            <select className="form-select" required value={formData.categoryId} onChange={handleCategoryChange}>
+                                                <option value="">-- Chọn loại --</option>
+                                                {categories.filter(c => !c.parent).map(root => {
+                                                    const children = categories.filter(child => child.parent && child.parent.id === root.id);
+                                                    if (children.length > 0) {
+                                                        return (
+                                                            <optgroup key={root.id} label={root.name}>
+                                                                <option value={root.id}>{root.name} (Chung)</option>
+                                                                {children.map(child => (
+                                                                    <option key={child.id} value={child.id}>{child.name}</option>
+                                                                ))}
+                                                            </optgroup>
+                                                        );
+                                                    } else {
+                                                        return <option key={root.id} value={root.id}>{root.name}</option>;
+                                                    }
+                                                })}
+                                            </select>
+                                        </div>
+ 
+                                        {/* Mô tả chi tiết */}
+                                        <div className="col-12">
+                                            <label className="small fw-bold text-secondary">Mô tả chi tiết sản phẩm</label>
+                                            <textarea
+                                                className="form-control"
+                                                rows={5}
+                                                placeholder="Nhập mô tả chi tiết về sản phẩm: chất liệu, công nghệ, phong cách, hướng dẫn sử dụng..."
+                                                value={formData.description}
+                                                onChange={e => setFormData({...formData, description: e.target.value})}
+                                                style={{ resize: 'vertical' }}
+                                            />
+                                            <div className="text-end">
+                                                <small className="text-muted">{formData.description.length} ký tự</small>
+                                            </div>
+                                        </div>
+ 
+                                        {/* Khu vực nhập Size/Số lượng động */}
                                         <div className="col-12 mt-3">
                                             <label className="small fw-bold d-block mb-2 text-dark">CẤU HÌNH TỒN KHO</label>
                                             <div className='p-3 border rounded bg-light'>
                                                 <div className="row g-2 align-items-center mb-3">
-                                                    <div className="col"><input type="text" className="form-control" value={currentSize} onChange={e => setCurrentSize(e.target.value)} placeholder={isShoeCategory ? "Nhập size số (vd: 40)" : "Nhập size chữ (vd: M)"}/></div>
-                                                    <div className="col"><input type="number" className="form-control" value={currentQuantity} onChange={e => setCurrentQuantity(e.target.value)} placeholder="Số lượng"/></div>
-                                                    <div className="col-auto"><button type="button" className="btn btn-success" onClick={handleAddSize}><FaPlusCircle/></button></div>
+                                                    <div className="col">
+                                                        <input type="text" className="form-control" value={currentSize} onChange={e => setCurrentSize(e.target.value)} placeholder={isShoeCategory ? "Nhập size số (vd: 40)" : "Nhập size chữ (vd: M)"}/>
+                                                    </div>
+                                                    <div className="col">
+                                                        <input type="number" className="form-control" value={currentQuantity} onChange={e => setCurrentQuantity(e.target.value)} placeholder="Số lượng"/>
+                                                    </div>
+                                                    <div className="col-auto">
+                                                        <button type="button" className="btn btn-success" onClick={handleAddSize}><FaPlusCircle/></button>
+                                                    </div>
                                                 </div>
                                                 <div className="d-flex flex-wrap gap-2">
                                                     {formData.productSizes.map(ps => (
@@ -210,7 +295,7 @@ const Products = () => {
                                         </div>
                                     </div>
                                 </div>
-
+ 
                                 <div className="col-12 text-end mt-4">
                                     <button type="button" className="btn btn-light me-2 fw-bold" onClick={resetForm}>HỦY BỎ</button>
                                     <button type="submit" className="btn btn-dark px-5 fw-bold"><FaSave className="me-2" /> LƯU SẢN PHẨM</button>
@@ -220,7 +305,7 @@ const Products = () => {
                     </div>
                 </div>
             )}
-
+ 
             {/* Bảng danh sách */}
             <div className="card border-0 shadow-sm overflow-hidden" style={{ borderRadius: '15px' }}>
                 <table className="table table-hover align-middle mb-0">
@@ -243,6 +328,11 @@ const Products = () => {
                                         <div>
                                             <div className="fw-bold">{p.name}</div>
                                             <div className="text-muted small">ID: #{p.id}</div>
+                                            {p.description && (
+                                                <div className="text-muted small text-truncate" style={{maxWidth: '200px'}} title={p.description}>
+                                                    {p.description}
+                                                </div>
+                                            )}
                                         </div>
                                     </div>
                                 </td>
@@ -287,5 +377,5 @@ const Products = () => {
         </div>
     );
 };
-
+ 
 export default Products;

@@ -12,20 +12,24 @@ import jakarta.persistence.EntityNotFoundException;
 
 @Service
 public class CategoryService {
-    
+
     @Autowired
     private CategoryRepository repository;
-    
-    public List<Category> findAll(){
+
+    public List<Category> findAll() {
         return repository.findAll();
     }
-    
+
     public Category findById(Long id) {
         Optional<Category> category = repository.findById(id);
         return category.orElseThrow(() -> new ResourceNotFoundException(id));
     }
 
     public Category insert(Category obj) {
+        if (obj.getParent() != null && obj.getParent().getId() != null) {
+            Category parentRef = repository.getReferenceById(obj.getParent().getId());
+            obj.setParent(parentRef);
+        }
         return repository.save(obj);
     }
 
@@ -47,8 +51,14 @@ public class CategoryService {
         }
     }
 
-   private void updateData(Category entity, Category obj) {
-    entity.setName(obj.getName());
-    entity.setDescription(obj.getDescription()); // Thêm dòng này để lưu mô tả
-}
+    private void updateData(Category entity, Category obj) {
+        entity.setName(obj.getName());
+        entity.setDescription(obj.getDescription()); // Thêm dòng này để lưu mô tả
+        if (obj.getParent() != null && obj.getParent().getId() != null) {
+            Category parentRef = repository.getReferenceById(obj.getParent().getId());
+            entity.setParent(parentRef);
+        } else {
+            entity.setParent(null);
+        }
+    }
 }

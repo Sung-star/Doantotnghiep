@@ -6,6 +6,7 @@ import {
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import api from '../../api/axiosConfig';
 import './Navbar.css';
 
 const Navbar = () => {
@@ -14,6 +15,19 @@ const Navbar = () => {
   const { user, logout } = useAuth();
   const { cartItems } = useCart();
   const navigate = useNavigate();
+  const [categories, setCategories] = useState([]);
+
+  React.useEffect(() => {
+    const fetchCategories = async () => {
+      try {
+        const res = await api.get('/categories');
+        setCategories(res.data);
+      } catch (err) {
+        console.error("Lỗi fetch danh mục Navbar:", err);
+      }
+    };
+    fetchCategories();
+  }, []);
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
@@ -85,84 +99,28 @@ const Navbar = () => {
                         />
                       </div>
 
-                      {/* Cột Giày */}
-                      <div className="col-lg-3">
-                        <h6 className="fw-bold mb-3 border-bottom pb-2">GIÀY</h6>
-                        <ul className="list-unstyled">
-                          <li>
-                            <span onClick={() => handleCategoryClick('Giày Chạy Bộ')}>
-                              Giày Chạy Bộ
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Giày Bóng Đá')}>
-                              Giày Bóng Đá
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Giày Lifestyle')}>
-                              Giày Lifestyle
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      {/* Cột Trang Phục */}
-                      <div className="col-lg-3">
-                        <h6 className="fw-bold mb-3 border-bottom pb-2">TRANG PHỤC</h6>
-                        <ul className="list-unstyled">
-                          <li>
-                            <span onClick={() => handleCategoryClick('Trang Phục Nam')}>
-                              Nam
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Trang Phục Nữ')}>
-                              Nữ
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Trang Phục Trẻ Em')}>
-                              Trẻ Em
-                            </span>
-                          </li>
-                        </ul>
-                      </div>
-
-                      {/* Cột Bộ Sưu Tập & Phụ Kiện */}
-                      <div className="col-lg-3">
-                        <h6 className="fw-bold mb-3 border-bottom pb-2">BỘ SƯU TẬP</h6>
-                        <ul className="list-unstyled">
-                          <li>
-                            <span onClick={() => handleCategoryClick('Adidas Originals')}>
-                              Adidas Originals
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Adidas Performance')}>
-                              Adidas Performance
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Phụ Kiện')}>
-                              Phụ Kiện
-                            </span>
-                          </li>
-                          <li>
-                            <span onClick={() => handleCategoryClick('Thiết Bị Tập Luyện')}>
-                              Thiết Bị Tập Luyện
-                            </span>
-                          </li>
-                          <li>
-                            <Link
-                              to="/products"
-                              className="mega-link-highlight mt-2 d-block text-decoration-none"
-                            >
-                              Xem Tất Cả &rarr;
-                            </Link>
-                          </li>
-                        </ul>
-                      </div>
+                      {/* Render dynamic categories */}
+                      {categories.filter(c => !c.parent).map(rootCategory => (
+                        <div className="col-lg-3" key={rootCategory.id}>
+                          <h6 className="fw-bold mb-3 border-bottom pb-2 text-uppercase">{rootCategory.name}</h6>
+                          <ul className="list-unstyled">
+                            {categories.filter(c => c.parent && c.parent.id === rootCategory.id).map(child => (
+                              <li key={child.id}>
+                                <span onClick={() => handleCategoryClick(child.name)} style={{cursor: 'pointer'}} className="d-block py-1 mega-link">
+                                  {child.name}
+                                </span>
+                              </li>
+                            ))}
+                            {categories.filter(c => c.parent && c.parent.id === rootCategory.id).length === 0 && (
+                               <li>
+                                  <span onClick={() => handleCategoryClick(rootCategory.name)} style={{cursor: 'pointer'}} className="d-block py-1 mega-link">
+                                    Xem tất cả {rootCategory.name}
+                                  </span>
+                               </li>
+                            )}
+                          </ul>
+                        </div>
+                      ))}
 
                     </div>
                   </div>
