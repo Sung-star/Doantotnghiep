@@ -50,7 +50,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
           <div className="col-md-4">
             <Link to={`/product/${product.id}`}>
               <img
-                src={product.imgUrl || 'https://placehold.co/400x500'}
+                src={product.imgUrl ? product.imgUrl.split(/,\s*(?=https?:\/\/|\/)/)[0].trim() : 'https://placehold.co/400x500'}
                 className="img-fluid rounded-start"
                 alt={product.name}
                 style={styles.imgCover}
@@ -104,7 +104,7 @@ const ProductCard = ({ product, viewMode = 'grid' }) => {
       <div className="position-relative">
         <Link to={`/product/${product.id}`}>
           <img
-            src={product.imgUrl || 'https://placehold.co/400x500'}
+            src={product.imgUrl ? product.imgUrl.split(/,\s*(?=https?:\/\/|\/)/)[0].trim() : 'https://placehold.co/400x500'}
             className="card-img-top"
             alt={product.name}
             style={styles.imgCover}

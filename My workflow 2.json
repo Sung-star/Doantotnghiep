@@ -1,0 +1,81 @@
+{
+  "name": "My workflow 2",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "chat",
+        "responseMode": "lastNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        0
+      ],
+      "id": "7f1fd01a-019c-433a-8ede-58d0b924ca53",
+      "name": "Webhook",
+      "webhookId": "9bc6fc9e-2660-41bd-8afb-2171b3d21263"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "value": "models/gemini-2.5-flash",
+          "mode": "list",
+          "cachedResultName": "models/gemini-2.5-flash"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Bạn là nhân viên tư vấn vui vẻ của 'Sporting Shop'.\nDưới đây là danh sách sản phẩm của shop: {{ $json.body.products }}\n\nNhiệm vụ:\n1. Trả lời bằng tiếng Việt thân thiện.\n2. Nếu khách hỏi sản phẩm có trong danh sách, hãy tư vấn và LUÔN kèm mã này ở cuối câu: [PRODUCT: ID|Tên|Giá|URL_Ảnh]. Hãy thay thế bằng thông tin thực tế từ danh sách.\n3. Nếu không có, hãy xin lỗi và tư vấn mẫu khác.\n\nKhách hỏi: {{ $json.body.message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.1,
+      "position": [
+        208,
+        0
+      ],
+      "id": "70092220-9cf5-4ae2-8d49-9dd5f514e2c9",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "anE1b09LPVYCnF35",
+          "name": "Google Gemini(PaLM) Api account 2"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "availableInMCP": false
+  },
+  "versionId": "703bd1e1-fbd2-4d53-97bd-313d9e424f2d",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "d4520454084419f9eaabdb1e8510f2609b877a07e50eb18abc663479fe96ac94"
+  },
+  "id": "vRLrQl4829s9KWemh5lS2",
+  "tags": []
+}
