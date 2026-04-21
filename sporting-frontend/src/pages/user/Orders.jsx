@@ -137,6 +137,7 @@ const Orders = () => {
                   <table className="table table-borderless">
                     <thead className="border-bottom">
                       <tr>
+                        <th style={{ width: '80px' }}>Ảnh</th>
                         <th>Sản phẩm</th>
                         <th className="text-center">Số lượng</th>
                         <th className="text-end">Đơn giá</th>
@@ -146,7 +147,14 @@ const Orders = () => {
                     <tbody>
                       {/* Hiển thị danh sách sản phẩm trong đơn hàng */}
                       {selectedOrder.items && selectedOrder.items.map((item, index) => (
-                        <tr key={index} className="border-bottom-0">
+                        <tr key={index} className="border-bottom-0 align-middle">
+                          <td className="py-3">
+                             <img 
+                                src={item.product.imgUrl ? item.product.imgUrl.split('|')[0].trim() : 'https://placehold.co/50'}
+                                alt="P"
+                                style={{ width: '50px', height: '60px', objectFit: 'cover', borderRadius: '5px' }}
+                             />
+                          </td>
                           <td className="py-3">
                             <div className="fw-bold text-dark">{item.product.name}</div>
                             <small className="text-muted">Mã SP: {item.product.id}</small>

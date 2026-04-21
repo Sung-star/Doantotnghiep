@@ -1,71 +1,217 @@
-:root {
-  --admin-primary: #3b82f6;
-  --admin-bg: #f8fafc;
-  --sidebar-width: 260px;
-  font-family: 'Inter', system-ui, sans-serif;
-  line-height: 1.5;
-}
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
 
-/* KHÚC NÀY ĐỂ FIX LỖI "NẰM GIỮA" */
-#root {
-  width: 100% !important;
-  max-width: none !important; /* Xóa bỏ giới hạn 1280px của Vite */
-  margin: 0 !important;
-  padding: 0 !important;
+:root {
+  /* Standard Professional Palette */
+  --primary: #0f172a;
+  --accent: #4e73df;
+  --info: #36b9cc;
+  --warning: #f6c23e;
+  --danger: #e74a3b;
+  --dark: #5a5c69;
+  --gray-100: #f8f9fc;
+  --gray-200: #eaecf4;
+  --gray-300: #dddfeb;
+  --gray-400: #d1d3e2;
+  --gray-500: #b7b9cc;
+  --gray-600: #858796;
+  --gray-700: #6e707e;
+  --gray-800: #5a5c69;
+  --gray-900: #3a3b45;
 }
 
 body {
   margin: 0;
-  padding: 0;
-  background-color: var(--admin-bg);
-  color: #1e293b;
-  min-height: 100vh;
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
+    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: #f8f9fc;
+  color: #5a5c69;
+  line-height: 1.5;
+}
+
+/* Base Utility Classes */
+.font-weight-bold { font-weight: 700!important; }
+.font-weight-black { font-weight: 900!important; }
+.small { font-size: 0.875em; }
+.cursor-pointer { cursor: pointer; }
+
+/* Table Improvements */
+.table {
+  color: #5a5c69;
+}
+.table thead th {
+  vertical-align: bottom;
+  border-bottom: 2px solid #e3e6f0;
+}
+.table-hover tbody tr:hover {
+  background-color: rgba(0,0,0,.04);
+}
+
+/* Card Styling */
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  word-wrap: break-word;
+  background-color: #fff;
+  background-clip: border-box;
+  border: 1px solid #e3e6f0;
+  border-radius: 0.35rem;
+}
+.card-header {
+  padding: 0.75rem 1.25rem;
+  margin-bottom: 0;
+  background-color: #f8f9fc;
+  border-bottom: 1px solid #e3e6f0;
+}
+
+/* Image Utilities */
+.object-fit-cover {
+  object-fit: cover;
+}
+
+/* Layout Reset for Admin */
+.admin-wrapper {
   overflow-x: hidden;
 }
 
-/* 2. Cấu trúc Layout tràn màn hình */
-.admin-layout {
-  display: flex;
-  width: 100vw; /* Ép rộng hết cỡ màn hình */
-  min-height: 100vh;
+/* Remove problematic global transitions */
+* {
+  transition: background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out, transform 0.2s ease-in-out;
 }
 
-.modern-sidebar {
-  width: var(--sidebar-width);
-  background: #0f172a; /* Slate 900 cực sang */
-  flex-shrink: 0; /* Không cho sidebar bị co lại */
-  box-shadow: 4px 0 10px rgba(0, 0, 0, 0.05);
-}
-
-.admin-main {
-  flex-grow: 1; /* Chiếm toàn bộ phần còn lại bên phải */
-  display: flex;
-  flex-direction: column;
-}
-
-/* 3. Nâng cấp thẩm mỹ Card & Ảnh */
-.card-modern {
+/* LUXURY DESIGN SYSTEM COMPONENTS */
+.luxury-card {
   background: #ffffff;
-  border-radius: 12px;
-  border: 1px solid #e2e8f0;
+  border: 1px solid #e3e6f0;
+  border-radius: 20px;
+  box-shadow: 0 0.15rem 1.75rem 0 rgba(58, 59, 69, 0.05);
   transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1);
 }
 
-.card-modern:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1);
+.luxury-card:hover {
+  transform: translateY(-8px);
+  box-shadow: 0 1rem 3rem rgba(0, 0, 0, 0.1);
 }
 
-.img-container {
-  aspect-ratio: 3/4;
-  overflow: hidden;
-  border-radius: 8px;
-  background: #f1f5f9;
+.luxury-button {
+  background: #000000;
+  color: #ffffff;
+  border: none;
+  border-radius: 50px;
+  padding: 0.8rem 2rem;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
 }
 
-.img-container img {
+.luxury-button:hover {
+  background: #333333;
+  transform: scale(1.02);
+  box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+}
+
+.text-gradient {
+  background: linear-gradient(135deg, #000000 0%, #4e73df 100%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.fw-black { font-weight: 900 !important; }
+.tracking-tighter { letter-spacing: -0.05em; }
+.tracking-widest { letter-spacing: 0.1em; }
+
+/* Sticky Navbar Adjustments */
+.navbar-custom {
+  transition: all 0.3s ease;
+}
+
+.has-mega-menu {
+  position: static !important;
+}
+
+.mega-menu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  width: 100%;
+  background: white;
+  visibility: hidden;
+  opacity: 0;
+  transition: all 0.3s ease;
+  transform: translateY(10px);
+  z-index: 1000;
+  border-bottom: 1px solid #eee;
+}
+
+.has-mega-menu:hover .mega-menu {
+  visibility: visible;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* AVATAR UPLOAD STYLES */
+.avatar-upload {
+  position: relative;
+  width: 150px;
+  height: 150px;
+  margin: 0 auto;
+}
+
+.avatar-preview {
   width: 100%;
   height: 100%;
-  object-fit: cover; /* Chặn việc ảnh bị méo */
+  border-radius: 40px;
+  object-fit: cover;
+  border: 4px solid rgba(255, 255, 255, 0.2);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.avatar-edit-btn {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  width: 40px;
+  height: 40px;
+  background: white;
+  color: black;
+  border-radius: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+  transition: all 0.3s ease;
+}
+
+.avatar-edit-btn:hover {
+  background: #f8fafc;
+  transform: scale(1.1);
+}
+
+/* LUXURY INPUT STYLES */
+.luxury-input {
+  background: #f8fafc;
+  border: 2px solid transparent;
+  border-radius: 15px;
+  padding: 0.8rem 1.2rem;
+  font-weight: 600;
+  font-size: 0.9rem;
+  transition: all 0.3s ease;
+  color: #1e293b;
+}
+
+.luxury-input:focus {
+  background: #ffffff;
+  border-color: #000000;
+  box-shadow: 0 0 0 4px rgba(0, 0, 0, 0.05);
+  outline: none;
 }

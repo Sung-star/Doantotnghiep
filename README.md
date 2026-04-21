@@ -1,97 +1,79 @@
-# RESTful E-Commerce API - Spring Boot
+# 🏆 SportingShop - Luxury E-commerce Platform
 
-<div style="display: flex; align-items: center;">
-  <div style="margin-right: 20px; width: 80%">
-    <p>
-      This is an E-Commerce API project developed using Spring Boot, JPA/Hibernate, Maven, H2, Apache Tomcat, and PostgreSQL. The API allows managing users, orders, products, and categories for an online store.
-    </p>
-    <pre>
-      .   ____          _            __ _ _
-     /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-    ( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
-     \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-      '  |____| .__|_| |_|_| |_\__, | / / / /
-     =========|_|==============|___/=/_/_/_/
-    :: Spring Boot ::                 (v3.1.1)
-    </pre>
-  </div>
+[![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.4.1-brightgreen.svg)](https://spring.io/projects/spring-boot)
+[![React](https://img.shields.io/badge/React-18.x-blue.svg)](https://reactjs.org/)
+[![MySQL](https://img.shields.io/badge/MySQL-8.0-orange.svg)](https://www.mysql.com/)
+[![Gemini AI](https://img.shields.io/badge/AI-Gemini%20Flash-purple.svg)](https://deepmind.google/technologies/gemini/)
 
-  <div style="display: flex; align-items: center; flex-direction: row-reverse;">
-    <div>
-      <img src="https://upload.wikimedia.org/wikipedia/pt/thumb/3/30/Java_programming_language_logo.svg/234px-Java_programming_language_logo.svg.png" alt="Java" width="50">
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Jakarta_ee_logo_schooner_color_stacked_default.svg/1200px-Jakarta_ee_logo_schooner_color_stacked_default.svg.png" alt="Rasa" width="50">
-      <img src="https://spring.io/img/favicon.ico" alt="spring" width="30">
-      <img src="https://spring.io/img/projects/spring-tool.svg" alt="sts4" width="58">
-      <img src="https://www.vectorlogo.zone/logos/hibernate/hibernate-icon.svg" alt="Hibernate" width="40">
-      <br>
-      <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Apache_Feather_Logo.svg/64px-Apache_Feather_Logo.svg.png" alt="Maven" width="25">
-      <img src="https://www.h2database.com/html/images/h2-logo-2.png" alt="H2" width="62">
-      <img src="https://tomcat.apache.org/res/images/tomcat.png" alt="Tomcat" width="52">
-      <img src="https://wiki.postgresql.org/images/3/30/PostgreSQL_logo.3colors.120x120.png" alt="PostgreSQL" width="50">
-    </div>
-  </div>
-</div>
+SportingShop là một nền tảng thương mại điện tử cao cấp dành cho thời trang thể thao, được xây dựng với mục tiêu mang lại trải nghiệm mua sắm đẳng cấp (Luxury Experience) và tích hợp các công nghệ thông minh hàng đầu.
 
-<!--
-```bash
-  .   ____          _            __ _ _
- /\\ / ___'_ __ _ _(_)_ __  __ _ \ \ \ \
-( ( )\___ | '_ | '_| | '_ \/ _` | \ \ \ \
- \\/  ___)| |_)| | | | | || (_| |  ) ) ) )
-  '  |____| .__|_| |_|_| |_\__, | / / / /
- =========|_|==============|___/=/_/_/_/
-:: Spring Boot ::                 (v3.1.1)
-```
+---
 
-This is an E-Commerce API project developed using Spring Boot, JPA/Hibernate, Maven, H2, Apache Tomcat, and PostgreSQL. The API allows managing users, orders, products, and categories for an online store.
+## ✨ Tính Năng Nổi Bật
 
-<div style="display: flex; align-items: center;">
-<div>
-  <img src="https://upload.wikimedia.org/wikipedia/pt/thumb/3/30/Java_programming_language_logo.svg/234px-Java_programming_language_logo.svg.png" alt="Java" width="30">
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Jakarta_ee_logo_schooner_color_stacked_default.svg/1200px-Jakarta_ee_logo_schooner_color_stacked_default.svg.png" alt="Rasa" width="50">
-  <img src="https://spring.io/img/favicon.ico" alt="spring" width="40">
-  <img src="https://spring.io/img/projects/spring-tool.svg" alt="sts4" width="40">
-  <img src="https://www.vectorlogo.zone/logos/hibernate/hibernate-icon.svg" alt="Hibernate" width="40">
-  <br>
-  <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Apache_Feather_Logo.svg/64px-Apache_Feather_Logo.svg.png" alt="Maven" width="22">
-  <img src="https://www.h2database.com/html/images/h2-logo-2.png" alt="H2" width="40">
-  <img src="https://tomcat.apache.org/res/images/tomcat.png" alt="Tomcat" width="52">
-  <img src="https://wiki.postgresql.org/images/3/30/PostgreSQL_logo.3colors.120x120.png" alt="PostgreSQL" width="40">
-</div>
+### 🛍️ Client Experience
+- **Luxury UI/UX**: Giao diện Full-width hiện đại, tối giản nhưng sang trọng, lấy cảm hứng từ các thương hiệu lớn như Adidas.
+- **AI-Powered Search**: Tìm kiếm sản phẩm thông minh thông qua Google Gemini AI, giúp khách hàng tìm phong cách phù hợp một cách nhanh chóng.
+- **Responsive Design**: Trải nghiệm mượt mà trên mọi thiết bị từ Desktop đến Mobile.
+- **Premium Product Detail**: Chế độ xem ảnh lưới lớn, tích hợp Zoom thông minh và thanh thông tin ghim cố định (Sticky Info).
+- **Cart & Wishlist**: Hệ thống giỏ hàng và danh sách yêu thích trực quan, nhanh chóng.
 
-</div> -->
+### 🛡️ Admin Dashboard
+- **Quản lý toàn diện**: Theo dõi đơn hàng, quản lý sản phẩm, biến thể (màu sắc, kích thước) và người dùng.
+- **Thống kê thông minh**: Dashboard trực quan với các chỉ số quan trọng.
+- **Avatar Management**: Hệ thống tải lên và quản lý ảnh đại diện cho cả Admin và Khách hàng.
 
-## Domain Model
+### 💳 Thanh Toán & Bảo Mật
+- **Đa dạng thanh toán**: Tích hợp VNPAY, MoMo mang lại sự tiện lợi và bảo mật tuyệt đối.
+- **Spring Security & JWT**: Hệ thống phân quyền và xác thực người dùng mạnh mẽ.
 
-The domain model of the API consists of the following entities:
+---
 
-- User: Represents the store users with attributes like name, email, phone, and password.
-- Order: Represents the orders placed by users, with information such as order date and status.
-- Category: Represents the categories of products sold in the store.
-- Product: Represents the products available for purchase, with information like name, description, and price.
-- OrderItem: Represents the items of an order with a many-to-many association with products, including additional attributes like quantity and unit price.
+## 🚀 Công Nghệ Sử Dụng
 
-![](https://github.com/jbrun0r/assets/blob/main/RESTful-E-Commerce-API/domain-model.png?raw=true)
+| Thành phần | Công nghệ |
+| :--- | :--- |
+| **Backend** | Spring Boot 3.4.1, Spring Security, JPA/Hibernate |
+| **Frontend** | ReactJS, Vite, Bootstrap 5, Lucide Icons |
+| **Database** | MySQL 8.0 |
+| **AI Integration** | Google Gemini API |
+| **Styling** | Vanilla CSS (Luxury Design System) |
 
-## Logical Layers
+---
 
-The project follows a logical layers structure for better code organization:
+## 🛠️ Hướng Dẫn Cài Đặt
 
-- Domain: Contains the classes representing the domain model of the application (entities).
-- Repositories: Contains the JPA repositories that interact with the database.
-- Services: Contains the business services that perform the API operations.
-- Resources: Contains the REST controllers that define the API endpoints.
+### 1. Yêu Cầu Hệ Thống
+- Java 17+
+- Node.js 18+
+- MySQL 8.0
 
-## Database Configuration
+### 2. Cấu Hình Backend
+1. Clone dự án: `git clone https://github.com/Sung-star/Doantotnghiep.git`
+2. Tạo database: `sporting_shop` trong MySQL.
+3. Cấu hình file `src/main/resources/application.properties`:
+   ```properties
+   spring.datasource.username=YOUR_USERNAME
+   spring.datasource.password=YOUR_PASSWORD
+   app.gemini.api-key=YOUR_GEMINI_KEY
+   ```
+4. Chạy dự án: `./mvnw spring-boot:run`
 
-The API uses H2 as the database for development and testing, with support for PostgreSQL in production environments. The database configuration is done in the `application.properties` file, and the test configuration is defined in the `application-test.properties` file.
+### 3. Cấu Hình Frontend
+1. Truy cập thư mục: `cd sporting-frontend`
+2. Cài đặt thư viện: `npm install`
+3. Chạy dev server: `npm run dev`
 
-## Future Improvements
+---
 
-This is a project in continuous development, and improvements and new features will be added over time. Feel free to contribute with suggestions and ideas!
+## 📸 Ảnh Chụp Giao Diện
 
-## Technologies
+*(Thêm screenshot của bạn vào đây sau khi đã đưa lên Github)*
 
-| ![Java](https://upload.wikimedia.org/wikipedia/pt/thumb/3/30/Java_programming_language_logo.svg/234px-Java_programming_language_logo.svg.png) | ![Jakarta](https://upload.wikimedia.org/wikipedia/commons/thumb/8/81/Jakarta_ee_logo_schooner_color_stacked_default.svg/100px-Jakarta_ee_logo_schooner_color_stacked_default.svg.png) | ![Spring](https://spring.io/img/favicon.ico) | ![STS4](https://spring.io/img/projects/spring-tool.svg) | ![Hibernate](https://www.vectorlogo.zone/logos/hibernate/hibernate-icon.svg) | ![Maven](https://upload.wikimedia.org/wikipedia/commons/thumb/7/7e/Apache_Feather_Logo.svg/64px-Apache_Feather_Logo.svg.png) | ![H2](https://www.h2database.com/html/images/h2-logo-2.png) | ![Tomcat](https://tomcat.apache.org/res/images/tomcat.png) | ![PostgreSQL](https://wiki.postgresql.org/images/3/30/PostgreSQL_logo.3colors.120x120.png) |
-| :-------------------------------------------------------------------------------------------------------------------------------------------: | :-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------: | :------------------------------------------: | :-----------------------------------------------------: | :--------------------------------------------------------------------------: | :--------------------------------------------------------------------------------------------------------------------------: | :---------------------------------------------------------: | :--------------------------------------------------------: | :----------------------------------------------------------------------------------------: |
-|                                                                     Java                                                                      |                                                                                        Jakarta                                                                                        |                    Spring                    |                          STS4                           |                                  Hibernate                                   |                                                            Maven                                                             |                             H2                              |                           Tomcat                           |                                         PostgreSQL                                         |
+---
+
+## 📄 Giấy Phép
+Dự án được phát triển bởi **Sung-star** cho mục đích đồ án tốt nghiệp.
+
+---
+**🏆 Nâng tầm phong cách thể thao cùng SportingShop!**

@@ -18,11 +18,13 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.example.ecommerce.entities.Product;
+import com.example.ecommerce.entities.ProductVariant;
 import com.example.ecommerce.services.ProductService;
 
 import java.util.List;
+import java.util.Set;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
 @RestController
 @RequestMapping(value = "/products")
 public class ProductResource {
@@ -31,30 +33,30 @@ public class ProductResource {
     private ProductService service;
     
     @GetMapping
-public ResponseEntity<Page<Product>> findAll(
-        @RequestParam(value = "name", required = false) String name,
-        @RequestParam(value = "color", required = false) String color,
-        @RequestParam(value = "brand", required = false) String brand,
-        @PageableDefault(sort = "id", direction = Sort.Direction.ASC, size = 12) Pageable pageable) {
-    
-    // Các filter sẽ được xử lý trong service
-    if ((name != null && !name.trim().isEmpty()) ||
-        (color != null && !color.trim().isEmpty()) ||
-        (brand != null && !brand.trim().isEmpty())) {
-        return ResponseEntity.ok().body(service.findByFilters(name, color, brand, pageable));
+    public ResponseEntity<Page<Product>> findAll(
+            @RequestParam(value = "keyword", required = false) String keyword,
+            @RequestParam(value = "categoryIds", required = false) List<Long> categoryIds,
+            @RequestParam(value = "minPrice", required = false) Double minPrice,
+            @RequestParam(value = "maxPrice", required = false) Double maxPrice,
+            @RequestParam(value = "color", required = false) String color,
+            @RequestParam(value = "productSize", required = false) String productSize, // ĐỔI TÊN Ở ĐÂY
+            @PageableDefault(sort = "id", direction = Sort.Direction.ASC, size = 12) Pageable pageable) {
+
+        // Kiểm tra nếu không có tham số lọc thực sự nào (trừ phân trang)
+        if (keyword == null && categoryIds == null && minPrice == null && maxPrice == null && color == null && productSize == null) {
+            return ResponseEntity.ok().body(service.findAll(pageable));
+        }
+
+        return ResponseEntity.ok().body(service.findWithDynamicFilter(keyword, categoryIds, minPrice, maxPrice, color, null, productSize, pageable));
     }
-    
-    return ResponseEntity.ok().body(service.findAll(pageable));
-}
     
     @GetMapping(value = "/{id}")
     public ResponseEntity<Product> findById(@PathVariable("id") Long id){
          return ResponseEntity.ok().body(service.findById(id));
     }
 
-    // --- Endpoint mới để lấy các phiên bản màu khác ---
     @GetMapping(value = "/{id}/variants")
-    public ResponseEntity<List<Product>> findVariants(@PathVariable("id") Long id) {
+    public ResponseEntity<Set<ProductVariant>> findVariants(@PathVariable("id") Long id) {
         return ResponseEntity.ok().body(service.findVariants(id));
     }
 

@@ -4,6 +4,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
@@ -25,19 +26,22 @@ public class ChatResource {
     @Autowired
     private ProductService productService;
 
-    private final String API_KEY = "AIzaSyBpwKkxgP5JHtug42DxLyF_wMhZ2fxPlnM";
-    private final String URL = "https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key="
-            + API_KEY;
+    @Value("${app.gemini.api-key}")
+    private String apiKey;
+
+    @Value("${app.gemini.base-url}")
+    private String baseUrl;
 
     @PostMapping
     public Map<String, String> askAI(@RequestBody Map<String, String> request) {
         String userMsg = request.get("message");
+        
+        // Tạo URL đầy đủ động từ cấu hình
+        String urlWithKey = baseUrl + "?key=" + apiKey;
 
         try {
-            // 1. Lấy dữ liệu sản phẩm
             var products = productService.findAll(PageRequest.of(0, 15)).getContent();
 
-            // 2. TẠO PROMPT MỚI (PHẢI NẰM Ở ĐÂY)
             String prompt = "Bạn là nhân viên tư vấn của 'Sporting Shop'.\n"
                     + "Danh sách sản phẩm: " + products.toString() + "\n"
                     + "Yêu cầu: Khi giới thiệu sản phẩm, hãy LUÔN viết kèm mã này ở cuối câu trả lời: "
@@ -49,8 +53,8 @@ public class ChatResource {
             Map<String, Object> partsObj = Map.of("parts", List.of(textObj));
             Map<String, Object> body = Map.of("contents", List.of(partsObj));
 
-            // 3. Gửi request
-            Map<String, Object> response = restTemplate.postForObject(URL, body, Map.class);
+            // Gửi request tới URL đã có key bí mật
+            Map<String, Object> response = restTemplate.postForObject(urlWithKey, body, Map.class);
 
             List candidates = (List) response.get("candidates");
             Map firstCandidate = (Map) candidates.get(0);
@@ -62,7 +66,7 @@ public class ChatResource {
 
         } catch (Exception e) {
             e.printStackTrace();
-            return Map.of("reply", "Lỗi: " + e.getMessage());
+            return Map.of("reply", "Hệ thống tư vấn đang bận, vui lòng thử lại sau!");
         }
     }
 }

@@ -3,13 +3,21 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
+
+# Chặn các file chứa key bí mật
+.env
+.env.properties
+application-secret.properties
+
 # Frontend
 sporting-frontend/node_modules/
 sporting-frontend/dist/
+
 # Backend
 *.class
 .idea/
 *.log
+
 ### STS ###
 .apt_generated
 .classpath
@@ -37,3 +45,9 @@ build/
 
 ### VS Code ###
 .vscode/
+# SportingShop ignores
+/uploads/
+*.sql
+npm
+ErrorResponse.java
+GlobalExceptionHandler.java

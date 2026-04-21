@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -40,6 +41,8 @@ public class User implements UserDetails, Serializable {
     private String email;
     private String phone;
     private String password;
+    @Column(columnDefinition = "LONGTEXT")
+    private String imgUrl; // Ảnh đại diện (Base64 hoặc URL)
     
     // THÊM TRƯỜNG NÀY ĐỂ QUẢN LÝ KHÓA TÀI KHOẢN
     private boolean active = true; 
@@ -158,6 +161,14 @@ public class User implements UserDetails, Serializable {
 
     public void setActive(boolean active) {
         this.active = active;
+    }
+
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
     }
 
     public Set<Role> getRoles() {

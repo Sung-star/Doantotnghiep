@@ -1,195 +1,194 @@
 import React, { useEffect, useState } from 'react';
 import api from '../../api/axiosConfig';
-import { FaEdit, FaTrash, FaPlus, FaSave, FaTimes, FaChevronDown, FaChevronRight } from 'react-icons/fa';
+import { 
+    FaEdit, FaTrash, FaPlus, FaSave, FaTimes, 
+    FaChevronDown, FaChevronRight, FaFolder, FaFolderOpen, 
+    FaLayerGroup, FaSitemap 
+} from 'react-icons/fa';
 
 const Categories = () => {
-  const [categories, setCategories] = useState([]);
-  const [loading, setLoading] = useState(true);
-  const [showForm, setShowForm] = useState(false);
-  const [editingId, setEditingId] = useState(null);
-  const [formData, setFormData] = useState({ name: '', description: '', parentId: '' });
-  const [expandedCategories, setExpandedCategories] = useState({});
+    const [categories, setCategories] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showForm, setShowForm] = useState(false);
+    const [editingId, setEditingId] = useState(null);
+    const [formData, setFormData] = useState({ name: '', description: '', parentId: '' });
+    const [expandedCategories, setExpandedCategories] = useState({});
 
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const res = await api.get('/categories');
-      setCategories(res.data);
-    } catch (err) {
-      console.error("Lỗi:", err);
-    } finally {
-      setLoading(false);
-    }
-  };
+    const fetchCategories = async () => {
+        try {
+            setLoading(true);
+            const res = await api.get('/categories');
+            setCategories(res.data);
+        } catch (err) {
+            console.error("Lỗi lấy danh mục:", err);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-  useEffect(() => { fetchCategories(); }, []);
+    useEffect(() => { fetchCategories(); }, []);
 
-  const handleSubmit = async (e) => {
-    e.preventDefault();
-    try {
-      const payload = {
-        name: formData.name,
-        description: formData.description,
-        parent: formData.parentId ? { id: formData.parentId } : null
-      };
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+        try {
+            const payload = {
+                name: formData.name,
+                description: formData.description,
+                parent: formData.parentId ? { id: formData.parentId } : null
+            };
 
-      if (editingId) {
-        await api.put(`/categories/${editingId}`, payload);
-      } else {
-        await api.post('/categories', payload);
-      }
-      alert("Thành công!");
-      setFormData({ name: '', description: '', parentId: '' });
-      setShowForm(false);
-      setEditingId(null);
-      fetchCategories();
-    } catch (err) { alert("Lỗi khi lưu danh mục!"); }
-  };
+            if (editingId) await api.put(`/categories/${editingId}`, payload);
+            else await api.post('/categories', payload);
+            
+            alert("Đã cập nhật danh mục thành công!");
+            resetForm();
+            fetchCategories();
+        } catch (err) { alert("Lỗi: Không thể lưu danh mục!"); }
+    };
 
-  const handleEdit = (cat) => {
-    setEditingId(cat.id);
-    setFormData({
-      name: cat.name,
-      description: cat.description || '',
-      parentId: cat.parent?.id || ''
-    });
-    setShowForm(true);
-  };
+    const handleEdit = (cat) => {
+        setEditingId(cat.id);
+        setFormData({
+            name: cat.name,
+            description: cat.description || '',
+            parentId: cat.parent?.id || ''
+        });
+        setShowForm(true);
+    };
 
-  const handleDelete = async (id) => {
-    if (window.confirm("Xóa danh mục này?")) {
-      try {
-        await api.delete(`/categories/${id}`);
-        fetchCategories();
-      } catch (err) { alert("Không thể xóa (có thể đang có sản phẩm thuộc danh mục này)"); }
-    }
-  };
+    const handleDelete = async (id) => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa danh mục này?")) {
+            try {
+                await api.delete(`/categories/${id}`);
+                fetchCategories();
+            } catch (err) { alert("Lỗi: Danh mục này đang chứa sản phẩm hoặc danh mục con!"); }
+        }
+    };
 
-  const toggleExpand = (id) => {
-    setExpandedCategories(prev => ({ ...prev, [id]: !prev[id] }));
-  };
+    const resetForm = () => {
+        setFormData({ name: '', description: '', parentId: '' });
+        setShowForm(false);
+        setEditingId(null);
+    };
 
-  // Lọc lấy danh sách danh mục gốc (không có parent)
-  const rootCategories = categories.filter(c => !c.parent);
+    const toggleExpand = (id) => {
+        setExpandedCategories(prev => ({ ...prev, [id]: !prev[id] }));
+    };
 
-  // Hàm lấy danh sách danh mục con của một danh mục cha
-  const getChildren = (parentId) => categories.filter(c => c.parent && c.parent.id === parentId);
+    const getChildren = (parentId) => {
+        return categories.filter(c => (parentId === null ? !c.parent : c.parent?.id === parentId));
+    };
 
-  return (
-    <div className="container-fluid p-4">
-      <div className="d-flex justify-content-between align-items-center mb-4">
-        <h2 className="fw-bold">Quản lý danh mục</h2>
-        <button className={`btn ${showForm ? 'btn-secondary' : 'btn-primary'} d-flex align-items-center gap-2`}
-          onClick={() => {
-            setShowForm(!showForm);
-            setEditingId(null);
-            setFormData({ name: '', description: '', parentId: '' });
-          }}>
-          {showForm ? <><FaTimes /> Đóng</> : <><FaPlus /> Thêm mới</>}
-        </button>
-      </div>
+    const CategoryRow = ({ category, level = 0 }) => {
+        const children = getChildren(category.id);
+        const isExpanded = expandedCategories[category.id];
+        const hasChildren = children.length > 0;
 
-      {showForm && (
-        <div className="card shadow-sm border-0 mb-4 bg-light">
-          <div className="card-body">
-            <h5 className="fw-bold">{editingId ? "Cập nhật danh mục" : "Thêm danh mục mới"}</h5>
-            <form onSubmit={handleSubmit} className="row g-3">
-              <div className="col-md-3">
-                <input type="text" className="form-control" placeholder="Tên danh mục" required
-                  value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
-              </div>
-              <div className="col-md-3">
-                <input type="text" className="form-control" placeholder="Mô tả"
-                  value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })} />
-              </div>
-              <div className="col-md-4">
-                <select className="form-select" value={formData.parentId} onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}>
-                  <option value="">-- Tạo thành danh mục gốc mới --</option>
-                  {rootCategories.filter(c => c.id !== editingId).map(c => (
-                    <option key={c.id} value={c.id}>Thuộc danh mục: {c.name}</option>
-                  ))}
-                </select>
-              </div>
-              <div className="col-md-2">
-                <button type="submit" className="btn btn-success w-100"><FaSave /> Lưu</button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+        return (
+            <React.Fragment>
+                <tr className="align-middle">
+                    <td className="px-4" style={{ paddingLeft: `${level * 30 + 20}px` }}>
+                        <div className="d-flex align-items-center">
+                            {hasChildren ? (
+                                <span onClick={() => toggleExpand(category.id)} style={{ cursor: 'pointer', width: '25px' }} className="text-primary">
+                                    {isExpanded ? <FaChevronDown size={12} /> : <FaChevronRight size={12} />}
+                                </span>
+                            ) : (
+                                <span style={{ width: '25px' }}></span>
+                            )}
+                            <span className="me-2 text-warning">
+                                {hasChildren ? (isExpanded ? <FaFolderOpen /> : <FaFolder />) : <FaLayerGroup />}
+                            </span>
+                            <span className={level === 0 ? "font-weight-bold text-dark" : "text-muted"}>
+                                {category.name}
+                            </span>
+                        </div>
+                    </td>
+                    <td className="small text-muted">{category.description || '---'}</td>
+                    <td className="text-center">
+                        <div className="btn-group shadow-sm">
+                            <button className="btn btn-white btn-sm text-primary border" onClick={() => handleEdit(category)}><FaEdit /></button>
+                            <button className="btn btn-white btn-sm text-danger border" onClick={() => handleDelete(category.id)}><FaTrash /></button>
+                        </div>
+                    </td>
+                </tr>
+                {isExpanded && hasChildren && children.map(child => <CategoryRow key={child.id} category={child} level={level + 1} />)}
+            </React.Fragment>
+        );
+    };
 
-      <div className="card shadow-sm border-0">
-        <div className="card-body">
-          {loading ? (
-            <div className="text-center py-5">Đang tải dữ liệu...</div>
-          ) : (
-            <div className="list-group">
-              {rootCategories.map(cat => {
-                const children = getChildren(cat.id);
-                const isExpanded = expandedCategories[cat.id];
-                return (
-                  <div key={cat.id} className="list-group-item flex-column align-items-start p-0 mb-3 border rounded shadow-sm">
-                    {/* Header danh mục cha */}
-                    <div
-                      className="d-flex w-100 justify-content-between align-items-center p-3"
-                      style={{ backgroundColor: '#f8f9fa', cursor: 'pointer' }}
-                      onClick={() => toggleExpand(cat.id)}
-                    >
-                      <div className="d-flex align-items-center">
-                        <span className="me-3 text-secondary">
-                          {children.length > 0 ? (isExpanded ? <FaChevronDown /> : <FaChevronRight />) : <span style={{ width: '16px', display: 'inline-block' }}></span>}
-                        </span>
-                        <h5 className="mb-0 fw-bold text-dark">{cat.name}</h5>
-                        <span className="badge bg-primary ms-3 rounded-pill">{children.length} danh mục con</span>
-                      </div>
-                      <div>
-                        <button className="btn btn-sm btn-warning me-2 px-3 fw-bold shadow-sm" onClick={(e) => { e.stopPropagation(); handleEdit(cat); }}><FaEdit /> Sửa</button>
-                        <button className="btn btn-sm btn-danger px-3 fw-bold shadow-sm" onClick={(e) => { e.stopPropagation(); handleDelete(cat.id); }}><FaTrash /> Xóa</button>
-                      </div>
+    return (
+        <div className="container-fluid">
+            <div className="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 className="h3 mb-0 text-gray-800">Quản lý Danh mục</h1>
+                <button className="btn btn-primary shadow-sm" onClick={() => setShowForm(!showForm)}>
+                    <FaPlus className="me-2" /> Thêm danh mục mới
+                </button>
+            </div>
+
+            {showForm && (
+                <div className="card shadow mb-4">
+                    <div className="card-header py-3 bg-primary text-white d-flex justify-content-between align-items-center">
+                        <h6 className="m-0 font-weight-bold">{editingId ? "Chỉnh sửa danh mục" : "Tạo danh mục mới"}</h6>
+                        <button className="btn btn-link text-white p-0" onClick={resetForm}><FaTimes /></button>
                     </div>
+                    <div className="card-body">
+                        <form onSubmit={handleSubmit} className="row g-3">
+                            <div className="col-md-5">
+                                <label className="form-label small font-weight-bold">Tên danh mục</label>
+                                <input type="text" className="form-control" required value={formData.name} onChange={(e) => setFormData({ ...formData, name: e.target.value })} />
+                            </div>
+                            <div className="col-md-4">
+                                <label className="form-label small font-weight-bold">Danh mục cha</label>
+                                <select className="form-select" value={formData.parentId} onChange={(e) => setFormData({ ...formData, parentId: e.target.value })}>
+                                    <option value="">-- Cấp cao nhất --</option>
+                                    {categories.filter(c => c.id !== editingId).map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            </div>
+                            <div className="col-md-3 d-flex align-items-end">
+                                <button type="submit" className="btn btn-primary w-100"><FaSave className="me-2"/> Lưu danh mục</button>
+                            </div>
+                            <div className="col-12">
+                                <label className="form-label small font-weight-bold">Mô tả</label>
+                                <textarea className="form-control" rows="2" value={formData.description} onChange={(e) => setFormData({ ...formData, description: e.target.value })}></textarea>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
 
-                    {/* Nội dung danh mục con sổ xuống */}
-                    {isExpanded && (
-                      <div className="p-0 bg-white border-top">
-                        {children.length > 0 ? (
-                          <table className="table table-hover mb-0">
-                            <thead className="table-light">
-                              <tr>
-                                <th className="ps-5 text-muted small border-0">Tên danh mục con</th>
-                                <th className="text-muted small border-0">Mô tả</th>
-                                <th className="text-end pe-4 text-muted small border-0">Hành động</th>
-                              </tr>
+            <div className="card shadow mb-4">
+                <div className="card-header py-3 bg-white">
+                    <h6 className="m-0 font-weight-bold text-primary">Cấu trúc cây danh mục</h6>
+                </div>
+                <div className="card-body p-0">
+                    <div className="table-responsive">
+                        <table className="table table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th className="px-4">Tên danh mục</th>
+                                    <th>Mô tả</th>
+                                    <th className="text-center">Thao tác</th>
+                                </tr>
                             </thead>
                             <tbody>
-                              {children.map(child => (
-                                <tr key={child.id} className="align-middle">
-                                  <td className="ps-5 fw-bold text-primary border-0">↳ {child.name}</td>
-                                  <td className="text-secondary border-0">{child.description || "—"}</td>
-                                  <td className="text-end pe-4 border-0">
-                                    <button className="btn btn-sm btn-outline-warning me-2" onClick={(e) => { e.stopPropagation(); handleEdit(child); }}><FaEdit /></button>
-                                    <button className="btn btn-sm btn-outline-danger" onClick={(e) => { e.stopPropagation(); handleDelete(child.id); }}><FaTrash /></button>
-                                  </td>
-                                </tr>
-                              ))}
+                                {loading ? (
+                                    <tr><td colSpan="3" className="text-center py-5"><div className="spinner-border text-primary"></div></td></tr>
+                                ) : (
+                                    getChildren(null).map(rootCat => <CategoryRow key={rootCat.id} category={rootCat} />)
+                                )}
+                                {!loading && getChildren(null).length === 0 && (
+                                    <tr><td colSpan="3" className="text-center py-4">Chưa có danh mục nào.</td></tr>
+                                )}
                             </tbody>
-                          </table>
-                        ) : (
-                          <div className="p-4 text-center text-muted small">Chưa có danh mục con nào.</div>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                );
-              })}
-              {rootCategories.length === 0 && (
-                <div className="p-5 text-center text-muted border rounded bg-light">Chưa có danh mục nào. Hãy thêm mới!</div>
-              )}
+                        </table>
+                    </div>
+                </div>
             </div>
-          )}
         </div>
-      </div>
-    </div>
-  );
+    );
 };
 
 export default Categories;

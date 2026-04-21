@@ -61,6 +61,9 @@ public class UserResource {
         user.setPhone(request.getPhone());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(true);
+        if (request.getImgUrl() != null) {
+            user.setImgUrl(request.getImgUrl());
+        }
 
         Set<Role> roles = new HashSet<>();
         // Nếu không gửi role thì mặc định là ROLE_CLIENT
@@ -144,6 +147,7 @@ public class UserResource {
         private String phone;
         private String password;
         private String role;
+        private String imgUrl;
 
         public String getName() {
             return name;
@@ -183,6 +187,14 @@ public class UserResource {
 
         public void setRole(String role) {
             this.role = role;
+        }
+
+        public String getImgUrl() {
+            return imgUrl;
+        }
+
+        public void setImgUrl(String imgUrl) {
+            this.imgUrl = imgUrl;
         }
     }
 }

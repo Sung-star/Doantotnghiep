@@ -23,6 +23,10 @@ public class Order implements Serializable {
     private String shippingName;
     private String shippingPhone;
     private String shippingAddress;
+    private Double shippingFee = 0.0; // Default shipping fee
+
+    private String voucherCode;
+    private Double discountAmount = 0.0; // Applied discount
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     private Instant moment;
@@ -74,6 +78,15 @@ public class Order implements Serializable {
     public Payment getPayment() { return payment; }
     public void setPayment(Payment payment) { this.payment = payment; }
 
+    public Double getShippingFee() { return shippingFee; }
+    public void setShippingFee(Double shippingFee) { this.shippingFee = shippingFee; }
+
+    public String getVoucherCode() { return voucherCode; }
+    public void setVoucherCode(String voucherCode) { this.voucherCode = voucherCode; }
+
+    public Double getDiscountAmount() { return discountAmount; }
+    public void setDiscountAmount(Double discountAmount) { this.discountAmount = discountAmount; }
+
     public Set<OrderItem> getItems() { return items; }
 
     public Double getTotal() {
@@ -81,7 +94,9 @@ public class Order implements Serializable {
         for (OrderItem x : items) {
             if (x.getSubTotal() != null) sum += x.getSubTotal();
         }
-        return sum;
+        sum += shippingFee != null ? shippingFee : 0.0;
+        sum -= discountAmount != null ? discountAmount : 0.0;
+        return Math.max(sum, 0.0); // Ensure not negative
     }
 
     @Override

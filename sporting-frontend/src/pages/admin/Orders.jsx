@@ -2,7 +2,8 @@ import React, { useEffect, useState } from 'react';
 import instance from '../../api/axiosConfig';
 import { 
   FaTrash, FaCheck, FaInfoCircle, FaSync, 
-  FaUser, FaPhoneAlt, FaMapMarkerAlt, FaCalendarAlt 
+  FaUser, FaPhoneAlt, FaMapMarkerAlt, FaCalendarAlt,
+  FaReceipt, FaShippingFast, FaCheckCircle, FaExclamationCircle, FaTimes, FaEye
 } from 'react-icons/fa';
 
 const AdminOrders = () => {
@@ -14,179 +15,177 @@ const AdminOrders = () => {
         setLoading(true);
         try {
             const res = await instance.get('/orders');
-            setOrders(res.data.sort((a, b) => b.id - a.id));
+            const data = Array.isArray(res.data) ? res.data : (res.data.content || []);
+            setOrders(data.sort((a, b) => b.id - a.id));
         } catch (err) { console.error(err); }
         setLoading(false);
     };
 
     useEffect(() => { fetchOrders(); }, []);
 
-    // HÀM CẬP NHẬT TRẠNG THÁI
     const handleUpdateStatus = async (id, newStatus) => {
         try {
             await instance.put(`/orders/${id}/status`, `"${newStatus}"`, {
                 headers: { "Content-Type": "application/json" }
             });
-            fetchOrders(); // Load lại bảng
+            fetchOrders();
         } catch (err) {
             alert("Lỗi khi cập nhật trạng thái!");
         }
     };
 
-    // HÀM XÓA
     const handleDelete = async (id) => {
-        if (window.confirm(`Hủy đơn hàng #DH${id}?`)) {
+        if (window.confirm(`Bạn có chắc chắn muốn hủy đơn hàng #ORD-${id}?`)) {
             try {
                 await instance.delete(`/orders/${id}`);
                 setOrders(orders.filter(o => o.id !== id));
-            } catch (err) { alert("Không thể xóa!"); }
+            } catch (err) { alert("Không thể xóa đơn hàng đã thanh toán!"); }
         }
     };
 
-    const getStatusClass = (status) => {
+    const getStatusLabel = (status) => {
         switch (status) {
-            case 'PAID': return 'bg-success';
-            case 'WAITING_PAYMENT': return 'bg-danger';
-            case 'SHIPPED': return 'bg-info';
-            case 'DELIVERED': return 'bg-primary';
-            default: return 'bg-secondary';
+            case 'PAID': return { text: 'Đã thanh toán', color: 'bg-success', icon: <FaCheckCircle /> };
+            case 'WAITING_PAYMENT': return { text: 'Chờ thanh toán', color: 'bg-warning', icon: <FaExclamationCircle /> };
+            case 'SHIPPED': return { text: 'Đang giao hàng', color: 'bg-primary', icon: <FaShippingFast /> };
+            case 'DELIVERED': return { text: 'Đã giao hàng', color: 'bg-info', icon: <FaCheckCircle /> };
+            case 'CANCELED': return { text: 'Đã hủy', color: 'bg-danger', icon: <FaTimes /> };
+            default: return { text: status, color: 'bg-secondary', icon: null };
         }
     };
 
     return (
-        <div className="container-fluid py-4 bg-light min-vh-100">
-            <div className="d-flex justify-content-between align-items-center mb-4">
-                <h2 className="fw-bold text-uppercase text-primary">Quản lý Đơn hàng</h2>
-                <button className="btn btn-dark shadow-sm" onClick={fetchOrders} disabled={loading}>
-                    <FaSync className={loading ? 'fa-spin' : ''} /> {loading ? "Đang tải..." : "Làm mới"}
+        <div className="container-fluid">
+            <div className="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 className="h3 mb-0 text-gray-800">Quản lý Đơn hàng</h1>
+                <button className="btn btn-primary shadow-sm" onClick={fetchOrders} disabled={loading}>
+                    <FaSync className={`me-2 ${loading ? 'fa-spin' : ''}`} /> Làm mới dữ liệu
                 </button>
             </div>
 
-            <div className="card shadow-sm border-0 rounded-3">
-                <div className="table-responsive">
-                    <table className="table table-hover align-middle mb-0">
-                        <thead className="table-dark">
-                            <tr>
-                                <th className="ps-4">Mã ĐH</th>
-                                <th>Khách hàng / Ngày đặt</th>
-                                <th>Tổng tiền</th>
-                                <th>Trạng thái hiện tại</th>
-                                <th className="text-center">Thao tác xử lý</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {orders.map(o => (
-                                <tr key={o.id}>
-                                    <td className="ps-4 fw-bold text-primary">#DH{o.id}</td>
-                                    <td>
-                                        <div className="fw-bold">{o.client.name}</div>
-                                        <small className="text-muted"><FaCalendarAlt /> {new Date(o.moment).toLocaleString('vi-VN')}</small>
-                                    </td>
-                                    <td className="text-danger fw-bold fs-5">{o.total?.toLocaleString()}đ</td>
-                                    <td>
-                                        <select 
-                                            className={`form-select form-select-sm fw-bold text-white border-0 ${getStatusClass(o.orderStatus)}`}
-                                            value={o.orderStatus}
-                                            onChange={(e) => handleUpdateStatus(o.id, e.target.value)}
-                                            style={{ width: '160px', borderRadius: '20px', paddingLeft: '15px' }}
-                                        >
-                                            <option value="WAITING_PAYMENT">Chờ thanh toán</option>
-                                            <option value="PAID">Đã thanh toán</option>
-                                            <option value="SHIPPED">Đang giao hàng</option>
-                                            <option value="DELIVERED">Đã giao hoàn tất</option>
-                                            <option value="CANCELED">Đã hủy đơn</option>
-                                        </select>
-                                    </td>
-                                    <td className="text-center">
-                                        <div className="d-flex justify-content-center gap-2">
-                                            {/* NÚT THU TIỀN: CHỈ HIỆN KHI CHƯA THANH TOÁN */}
-                                            {o.orderStatus === 'WAITING_PAYMENT' ? (
-                                                <button className="btn btn-success btn-sm px-3 shadow-sm fw-bold" 
-                                                        onClick={() => handleUpdateStatus(o.id, 'PAID')}>
-                                                    <FaCheck /> THU TIỀN
-                                                </button>
-                                            ) : (
-                                                <button className="btn btn-outline-success btn-sm disabled border-0 fw-bold">
-                                                    <FaCheck /> ĐÃ THU
-                                                </button>
-                                            )}
-
-                                            {/* NÚT CHI TIẾT */}
-                                            <button 
-                                                className="btn btn-primary btn-sm px-3 shadow-sm" 
-                                                data-bs-toggle="modal" data-bs-target="#adminOrderModal"
-                                                onClick={() => setSelectedOrder(o)}
-                                            >
-                                                <FaInfoCircle /> CHI TIẾT
-                                            </button>
-
-                                            {/* NÚT XÓA */}
-                                            <button className="btn btn-outline-danger btn-sm px-3" onClick={() => handleDelete(o.id)}>
-                                                <FaTrash />
-                                            </button>
-                                        </div>
-                                    </td>
+            <div className="card shadow mb-4">
+                <div className="card-header py-3 bg-white">
+                    <h6 className="m-0 font-weight-bold text-primary">Danh sách đơn hàng gần đây</h6>
+                </div>
+                <div className="card-body p-0">
+                    <div className="table-responsive">
+                        <table className="table table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th className="px-4">Mã Đơn</th>
+                                    <th>Ngày đặt</th>
+                                    <th>Khách hàng</th>
+                                    <th>Tổng tiền</th>
+                                    <th>Trạng thái</th>
+                                    <th className="text-center">Thao tác</th>
                                 </tr>
-                            ))}
-                        </tbody>
-                    </table>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    <tr><td colSpan="6" className="text-center py-5"><div className="spinner-border text-primary"></div></td></tr>
+                                ) : orders.length > 0 ? orders.map(o => {
+                                    const status = getStatusLabel(o.orderStatus);
+                                    return (
+                                        <tr key={o.id}>
+                                            <td className="px-4 font-weight-bold">#ORD-{o.id}</td>
+                                            <td>{new Date(o.moment).toLocaleString('vi-VN')}</td>
+                                            <td>
+                                                <div className="font-weight-bold">{o.client?.name || 'Khách vãng lai'}</div>
+                                                <div className="small text-muted">{o.client?.email}</div>
+                                            </td>
+                                            <td className="font-weight-bold text-danger">{o.total?.toLocaleString()}đ</td>
+                                            <td>
+                                                <div className="dropdown">
+                                                    <button className={`btn btn-sm ${status.color} text-white dropdown-toggle`} type="button" data-bs-toggle="dropdown">
+                                                        {status.text}
+                                                    </button>
+                                                    <ul className="dropdown-menu shadow">
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'WAITING_PAYMENT')}>Chờ thanh toán</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'PAID')}>Đã thanh toán</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'SHIPPED')}>Đang giao hàng</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'DELIVERED')}>Đã giao hàng</button></li>
+                                                        <li><hr className="dropdown-divider"/></li>
+                                                        <li><button className="dropdown-item small text-danger" onClick={() => handleUpdateStatus(o.id, 'CANCELED')}>Hủy đơn hàng</button></li>
+                                                    </ul>
+                                                </div>
+                                            </td>
+                                            <td className="text-center">
+                                                <div className="btn-group shadow-sm">
+                                                    <button className="btn btn-white btn-sm text-primary border" title="Xem chi tiết" data-bs-toggle="modal" data-bs-target="#orderInvoiceModal" onClick={() => setSelectedOrder(o)}>
+                                                        <FaEye />
+                                                    </button>
+                                                    <button className="btn btn-white btn-sm text-danger border" title="Hủy đơn" onClick={() => handleDelete(o.id)}>
+                                                        <FaTrash />
+                                                    </button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                }) : (
+                                    <tr><td colSpan="6" className="text-center py-4">Chưa có đơn hàng nào.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
 
-            {/* --- MODAL CHI TIẾT ĐƠN HÀNG --- */}
-            <div className="modal fade" id="adminOrderModal" tabIndex="-1" aria-hidden="true">
-                <div className="modal-dialog modal-lg border-0">
-                    <div className="modal-content shadow-lg border-0 rounded-4">
-                        <div className="modal-header bg-primary text-white py-3">
-                            <h5 className="modal-title fw-bold"> CHI TIẾT ĐƠN HÀNG #DH{selectedOrder?.id}</h5>
+            {/* Modal Chi tiết đơn hàng */}
+            <div className="modal fade" id="orderInvoiceModal" tabIndex="-1">
+                <div className="modal-dialog modal-lg">
+                    <div className="modal-content shadow border-0">
+                        <div className="modal-header bg-primary text-white">
+                            <h5 className="modal-title font-weight-bold"><FaReceipt className="me-2"/> Chi tiết đơn hàng #ORD-{selectedOrder?.id}</h5>
                             <button type="button" className="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                         </div>
                         <div className="modal-body p-4">
                             {selectedOrder && (
                                 <div className="row">
-                                    {/* THÔNG TIN GIAO HÀNG */}
-                                    <div className="col-md-7 mb-4">
-                                        <h6 className="text-primary fw-bold border-bottom pb-2">THÔNG TIN GIAO HÀNG</h6>
-                                        <p className="mb-2"><FaUser className="me-2 text-muted"/> <b>Người nhận:</b> {selectedOrder.shippingName || selectedOrder.client.name}</p>
-                                        <p className="mb-2"><FaPhoneAlt className="me-2 text-muted"/> <b>Điện thoại:</b> {selectedOrder.shippingPhone || "Chưa có"}</p>
-                                        <p className="mb-2"><FaMapMarkerAlt className="me-2 text-muted"/> <b>Địa chỉ:</b> {selectedOrder.shippingAddress || "Chưa có"}</p>
+                                    <div className="col-md-6 mb-4">
+                                        <h6 className="font-weight-bold text-primary border-bottom pb-2 mb-3">Thông tin khách hàng</h6>
+                                        <p className="mb-1"><strong><FaUser className="me-2 text-muted"/></strong> {selectedOrder.shippingName || selectedOrder.client?.name}</p>
+                                        <p className="mb-1"><strong><FaPhoneAlt className="me-2 text-muted"/></strong> {selectedOrder.shippingPhone || selectedOrder.client?.phone}</p>
+                                        <p className="mb-1"><strong><FaMapMarkerAlt className="me-2 text-muted"/></strong> {selectedOrder.shippingAddress || "N/A"}</p>
                                     </div>
-
-                                    {/* THÔNG TIN TRẠNG THÁI */}
-                                    <div className="col-md-5 mb-4 text-md-end bg-light p-3 rounded">
-                                        <h6 className="text-dark fw-bold mb-2">HÓA ĐƠN</h6>
-                                        <p className="small mb-1 text-muted">Mã khách hàng: #{selectedOrder.client.id}</p>
-                                        <p className="small mb-1">Ngày đặt: {new Date(selectedOrder.moment).toLocaleString('vi-VN')}</p>
-                                        <p className="small mb-0">Trạng thái: <b>{selectedOrder.orderStatus}</b></p>
+                                    <div className="col-md-6 mb-4">
+                                        <h6 className="font-weight-bold text-primary border-bottom pb-2 mb-3">Tóm tắt đơn hàng</h6>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span>Trạng thái:</span>
+                                            <span className="badge bg-primary">{selectedOrder.orderStatus}</span>
+                                        </div>
+                                        <div className="d-flex justify-content-between mb-2">
+                                            <span>Tổng thanh toán:</span>
+                                            <span className="font-weight-bold text-danger">{selectedOrder.total?.toLocaleString()}đ</span>
+                                        </div>
                                     </div>
-
-                                    {/* DANH SÁCH SẢN PHẨM */}
-                                    <div className="col-12 mt-2">
-                                        <h6 className="text-primary fw-bold border-bottom pb-2">DANH SÁCH SẢN PHẨM</h6>
-                                        <table className="table table-sm">
-                                            <thead>
-                                                <tr className="table-secondary">
-                                                    <th className="ps-2">Sản phẩm</th>
-                                                    <th className="text-center">Số lượng</th>
-                                                    <th className="text-end pe-2">Thành tiền</th>
-                                                </tr>
-                                            </thead>
-                                            <tbody>
-                                                {selectedOrder.items?.map((item, idx) => (
-                                                    <tr key={idx}>
-                                                        <td className="ps-2 py-2">{item.product.name}</td>
-                                                        <td className="text-center py-2">{item.quantity}</td>
-                                                        <td className="text-end pe-2 py-2">{(item.price * item.quantity).toLocaleString()}đ</td>
+                                    <div className="col-12">
+                                        <h6 className="font-weight-bold text-primary border-bottom pb-2 mb-3">Danh sách sản phẩm</h6>
+                                        <div className="table-responsive">
+                                            <table className="table table-sm table-bordered">
+                                                <thead className="table-light">
+                                                    <tr className="small text-uppercase">
+                                                        <th>Sản phẩm</th>
+                                                        <th className="text-center">Số lượng</th>
+                                                        <th className="text-end">Đơn giá</th>
                                                     </tr>
-                                                ))}
-                                            </tbody>
-                                        </table>
-                                        <div className="text-end mt-4">
-                                            <h3 className="fw-bold text-danger">TỔNG CỘNG: {selectedOrder.total?.toLocaleString()} VNĐ</h3>
+                                                </thead>
+                                                <tbody>
+                                                    {selectedOrder.items?.map((item, idx) => (
+                                                        <tr key={idx}>
+                                                            <td>{item.product?.name}</td>
+                                                            <td className="text-center">{item.quantity}</td>
+                                                            <td className="text-end">{item.price?.toLocaleString()}đ</td>
+                                                        </tr>
+                                                    ))}
+                                                </tbody>
+                                            </table>
                                         </div>
                                     </div>
                                 </div>
                             )}
+                        </div>
+                        <div className="modal-footer">
+                            <button type="button" className="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                         </div>
                     </div>
                 </div>

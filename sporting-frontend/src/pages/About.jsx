@@ -1,149 +1,135 @@
 import React from 'react';
-import { ShoppingBag, Target, Users, ThumbsUp, ArrowRight, Award, Truck, ShieldCheck } from 'lucide-react';
+import { 
+    ShoppingBag, Target, Users, ThumbsUp, ArrowRight, 
+    Award, Truck, ShieldCheck, Heart, Sparkles, Globe 
+} from 'lucide-react';
 import { Link } from 'react-router-dom';
-import './AboutPage.css'; // Đừng quên import file CSS ở dưới nhé
 
 const AboutPage = () => {
   return (
-    <div className="about-page-wrapper pb-5">
-      {/* --- HERO SECTION --- */}
-      <div className="bg-light py-5 mb-5 border-bottom">
-        <div className="container text-center py-4">
-          <span className="badge bg-danger text-uppercase px-3 py-2 rounded-pill mb-3 shadow-sm">
-            Khám Phá Sporting Shop
-          </span>
-          <h1 className="display-4 fw-bold mb-3">
-            Vượt Qua Giới Hạn <br /> Cùng <span className="text-danger">Sporting Shop</span>
-          </h1>
-          <p className="lead text-muted mx-auto" style={{ maxWidth: '700px' }}>
-            Điểm đến lý tưởng cho mọi nhu cầu về trang phục và dụng cụ thể thao. Chúng tôi không chỉ bán sản phẩm, chúng tôi trao cho bạn động lực.
-          </p>
+    <div className="about-page-wrapper bg-white min-vh-100" style={{ fontFamily: '"Inter", sans-serif' }}>
+      
+      {/* --- PREMIUM HERO SECTION --- */}
+      <div className="position-relative overflow-hidden py-5 mb-5" style={{ background: 'var(--bg-main)' }}>
+        <div className="container position-relative py-5">
+            <div className="row justify-content-center text-center">
+                <div className="col-lg-8">
+                    <span className="text-uppercase tracking-widest small fw-black text-muted mb-3 d-block">CHƯƠNG TIẾP THEO CỦA PHONG CÁCH</span>
+                    <h1 className="display-3 fw-black text-dark mb-4 text-uppercase tracking-tighter" style={{ lineHeight: 0.9 }}>
+                        KẾT NỐI <span className="text-gradient">ĐAM MÊ</span> <br/> KIẾN TẠO <span className="text-dark">ĐẲNG CẤP</span>
+                    </h1>
+                    <p className="lead text-muted mx-auto mb-5" style={{ maxWidth: '650px', fontSize: '1.1rem' }}>
+                        Tại Sporting Shop, chúng tôi không chỉ cung cấp trang phục. Chúng tôi mang đến một phong cách sống đỉnh cao, nơi hiệu năng gặp gỡ sự sang trọng.
+                    </p>
+                    <div className="d-flex justify-content-center gap-3">
+                        <Link to="/products" className="luxury-button px-5 py-3 d-flex align-items-center gap-2">
+                            KHÁM PHÁ BỘ SƯU TẬP <ArrowRight size={18} />
+                        </Link>
+                    </div>
+                </div>
+            </div>
         </div>
       </div>
 
       <div className="container">
-        {/* --- CÂU CHUYỆN CỦA CHÚNG TÔI --- */}
-        <div className="row g-5 align-items-center mb-5 pb-4">
-          <div className="col-lg-6 position-relative">
-            <div className="img-wrapper rounded-4 shadow-lg overflow-hidden">
-              <img 
-                src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=800&auto=format&fit=crop" 
-                alt="Về chúng tôi" 
-                className="img-fluid w-100 object-fit-cover hover-zoom"
-                style={{ height: '450px' }}
-              />
-            </div>
-            {/* Box nổi trang trí */}
-            <div className="position-absolute bottom-0 end-0 bg-white p-4 rounded-4 shadow-lg m-4 d-none d-md-block bounce-anim">
-              <div className="d-flex align-items-center gap-3">
-                <Award size={40} className="text-warning" />
-                <div>
-                  <h4 className="fw-bold mb-0">100%</h4>
-                  <small className="text-muted fw-semibold">Chính hãng</small>
+        {/* --- BRAND STORY SECTION --- */}
+        <div className="row g-5 align-items-center mb-5 pb-5">
+          <div className="col-lg-6">
+            <div className="position-relative">
+                <div className="luxury-card p-0 overflow-hidden border-0" style={{ borderRadius: '40px' }}>
+                    <img 
+                        src="https://images.unsplash.com/photo-1517836357463-d25dfeac3438?w=800&q=80" 
+                        alt="Brand Story" 
+                        className="img-fluid w-100 object-fit-cover"
+                        style={{ height: '600px' }}
+                    />
                 </div>
-              </div>
+                <div className="position-absolute -bottom-10 -right-10 bg-dark text-white p-5 rounded-4 shadow-lg d-none d-lg-block" style={{ width: '280px', bottom: '-40px', right: '-40px' }}>
+                    <h2 className="fw-black mb-1">05+</h2>
+                    <p className="small text-white-50 mb-0 fw-bold">NĂM DẪN ĐẦU XU HƯỚNG THỂ THAO CAO CẤP</p>
+                </div>
             </div>
           </div>
           
           <div className="col-lg-6 ps-lg-5">
-            <h6 className="text-danger fw-bold text-uppercase tracking-wider mb-2">Câu Chuyện Thương Hiệu</h6>
-            <h2 className="fw-bold mb-4">Sinh Ra Từ Đam Mê <br/> Phát Triển Vì Cộng Đồng</h2>
-            <p className="text-secondary lh-lg mb-4">
-              <strong>Sporting Shop</strong> được thành lập với một niềm đam mê cháy bỏng: mang đến cho cộng đồng những sản phẩm thể thao chất lượng cao. Chúng tôi tin rằng, với trang bị phù hợp, mỗi buổi tập đều là một bước tiến đến phiên bản tốt hơn của chính bạn.
-            </p>
-            <p className="text-secondary lh-lg mb-4">
-              Từ những vận động viên chuyên nghiệp đến những người mới bắt đầu hành trình tập luyện, chúng tôi cam kết cung cấp các sản phẩm đa dạng từ những thương hiệu hàng đầu thế giới với mức giá cạnh tranh nhất.
-            </p>
-            <div className="row g-3 mt-2">
-              <div className="col-sm-6 d-flex align-items-center gap-2">
-                <ShieldCheck size={20} className="text-success" /> <span className="fw-medium">Bảo hành trọn đời</span>
-              </div>
-              <div className="col-sm-6 d-flex align-items-center gap-2">
-                <Truck size={20} className="text-primary" /> <span className="fw-medium">Giao hàng siêu tốc</span>
-              </div>
+            <div className="ps-lg-4">
+                <div className="d-flex align-items-center gap-2 mb-3">
+                    <div className="bg-dark" style={{ width: '40px', height: '2px' }}></div>
+                    <span className="fw-black small text-uppercase tracking-widest text-muted">DI SẢN THƯƠNG HIỆU</span>
+                </div>
+                <h2 className="display-5 fw-black mb-4 text-dark text-uppercase tracking-tighter">SINH RA ĐỂ <br/> TRỞ THÀNH BIỂU TƯỢNG</h2>
+                <p className="text-muted lh-lg mb-4" style={{ fontSize: '1.05rem' }}>
+                    Mỗi sản phẩm tại <strong>Sporting Shop</strong> là một tuyên ngôn về sự hoàn hảo. Chúng tôi khắt khe trong việc lựa chọn từng thương hiệu, từng chất liệu để đảm bảo rằng khi bạn khoác lên mình, bạn đang mang theo tinh hoa của ngành công nghiệp thể thao toàn cầu.
+                </p>
+                <p className="text-muted lh-lg mb-5">
+                    Hành trình của chúng tôi bắt đầu từ khát khao định nghĩa lại thị trường đồ thể thao Việt Nam - không chỉ là sự tiện dụng, mà còn là sự xa xỉ trong từng trải nghiệm.
+                </p>
+                
+                <div className="row g-4">
+                    <div className="col-sm-6">
+                        <div className="d-flex align-items-start gap-3">
+                            <div className="text-dark p-2 bg-light rounded-3"><ShieldCheck size={20} /></div>
+                            <div>
+                                <h6 className="fw-black mb-1">CHÍNH HÃNG 100%</h6>
+                                <p className="small text-muted mb-0">Cam kết bảo hành và xác thực mọi sản phẩm.</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div className="col-sm-6">
+                        <div className="d-flex align-items-start gap-3">
+                            <div className="text-dark p-2 bg-light rounded-3"><Globe size={20} /></div>
+                            <div>
+                                <h6 className="fw-black mb-1">PHỦ SÓNG TOÀN CẦU</h6>
+                                <p className="small text-muted mb-0">Hợp tác cùng 50+ thương hiệu quốc tế.</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
             </div>
           </div>
         </div>
 
-        {/* --- DẢI THỐNG KÊ (STATS) --- */}
-        <div className="bg-dark text-white rounded-4 shadow py-5 mb-5">
-          <div className="row text-center g-4">
-            <div className="col-md-4 border-end border-secondary">
-              <h2 className="display-5 fw-bold text-danger mb-0">5+</h2>
-              <p className="text-light opacity-75 mt-2 mb-0">Năm Kinh Nghiệm</p>
-            </div>
-            <div className="col-md-4 border-end border-secondary">
-              <h2 className="display-5 fw-bold text-danger mb-0">10K+</h2>
-              <p className="text-light opacity-75 mt-2 mb-0">Khách Hàng Hài Lòng</p>
-            </div>
-            <div className="col-md-4">
-              <h2 className="display-5 fw-bold text-danger mb-0">50+</h2>
-              <p className="text-light opacity-75 mt-2 mb-0">Thương Hiệu Toàn Cầu</p>
-            </div>
-          </div>
-        </div>
-
-        {/* --- GIÁ TRỊ CỐT LÕI --- */}
-        <div className="text-center mb-5">
-          <h6 className="text-danger fw-bold text-uppercase mb-2">Giá Trị Của Chúng Tôi</h6>
-          <h2 className="fw-bold">Tại Sao Nên Chọn Sporting Shop?</h2>
+        {/* --- VALUES GRID --- */}
+        <div className="text-center mb-5 pt-5">
+          <span className="badge border border-dark text-dark rounded-pill px-3 py-2 mb-3 text-uppercase fw-bold">GIÁ TRỊ CỐT LÕI</span>
+          <h2 className="display-6 fw-black text-dark text-uppercase tracking-tighter">TRIẾT LÝ VẬN HÀNH</h2>
         </div>
         
-        <div className="row g-4 mb-5">
-          {/* Card 1 */}
-          <div className="col-md-6 col-lg-3">
-            <div className="value-card card h-100 border-0 shadow-sm p-4 text-center">
-              <div className="icon-wrapper bg-danger bg-opacity-10 text-danger mx-auto mb-4 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
-                <Target size={36} />
-              </div>
-              <h5 className="fw-bold">Sứ Mệnh</h5>
-              <p className="text-muted small mb-0">Tiếp lửa đam mê và đồng hành cùng bạn trên con đường chinh phục các mục tiêu sức khỏe.</p>
+        <div className="row g-4 mb-5 pb-5">
+          {[
+            { icon: <Target size={32} />, title: "SỨ MỆNH", desc: "Tiếp lửa đam mê và đồng hành cùng bạn trên con đường chinh phục các mục tiêu sức khỏe.", bg: "#fef3c7" },
+            { icon: <Sparkles size={32} />, title: "SẢN PHẨM", desc: "Cung cấp trang phục, giày và phụ kiện chính hãng từ các thương hiệu uy tín nhất.", bg: "#ecfdf5" },
+            { icon: <Users size={32} />, title: "CỘNG ĐỒNG", desc: "Xây dựng một cộng đồng năng động, nơi mọi người cùng truyền cảm hứng cho nhau.", bg: "#eff6ff" },
+            { icon: <Heart size={32} />, title: "TẬN TÂM", desc: "Đảm bảo chất lượng dịch vụ chu đáo và chính sách đổi trả vô cùng linh hoạt.", bg: "#fff1f2" }
+          ].map((v, i) => (
+            <div className="col-md-3" key={i}>
+                <div className="luxury-card border-0 text-center p-5 h-100" style={{ borderRadius: '30px' }}>
+                    <div className="mb-4 d-flex justify-content-center">
+                        <div className="p-4 rounded-circle" style={{ background: v.bg, color: 'var(--primary)' }}>
+                            {v.icon}
+                        </div>
+                    </div>
+                    <h5 className="fw-black mb-3 text-uppercase">{v.title}</h5>
+                    <p className="text-muted small mb-0">{v.desc}</p>
+                </div>
             </div>
-          </div>
-          {/* Card 2 */}
-          <div className="col-md-6 col-lg-3">
-            <div className="value-card card h-100 border-0 shadow-sm p-4 text-center">
-              <div className="icon-wrapper bg-primary bg-opacity-10 text-primary mx-auto mb-4 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
-                <ShoppingBag size={36} />
-              </div>
-              <h5 className="fw-bold">Sản Phẩm</h5>
-              <p className="text-muted small mb-0">Cung cấp trang phục, giày và phụ kiện chính hãng từ các thương hiệu uy tín toàn cầu.</p>
-            </div>
-          </div>
-          {/* Card 3 */}
-          <div className="col-md-6 col-lg-3">
-            <div className="value-card card h-100 border-0 shadow-sm p-4 text-center">
-              <div className="icon-wrapper bg-success bg-opacity-10 text-success mx-auto mb-4 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
-                <Users size={36} />
-              </div>
-              <h5 className="fw-bold">Cộng Đồng</h5>
-              <p className="text-muted small mb-0">Xây dựng một cộng đồng năng động, nơi mọi người cùng học hỏi và truyền cảm hứng.</p>
-            </div>
-          </div>
-          {/* Card 4 */}
-          <div className="col-md-6 col-lg-3">
-            <div className="value-card card h-100 border-0 shadow-sm p-4 text-center">
-              <div className="icon-wrapper bg-warning bg-opacity-10 text-warning mx-auto mb-4 rounded-circle d-flex align-items-center justify-content-center" style={{ width: '80px', height: '80px' }}>
-                <ThumbsUp size={36} />
-              </div>
-              <h5 className="fw-bold">Cam Kết</h5>
-              <p className="text-muted small mb-0">Đảm bảo 100% chất lượng, dịch vụ chu đáo và chính sách đổi trả vô cùng linh hoạt.</p>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* --- KÊU GỌI HÀNH ĐỘNG (CTA) --- */}
-        <div className="bg-danger text-white rounded-4 p-5 text-center position-relative overflow-hidden shadow">
-          {/* Vòng tròn trang trí background */}
-          <div className="position-absolute top-0 start-0 w-100 h-100" style={{ background: 'radial-gradient(circle at top right, rgba(255,255,255,0.2), transparent 50%)' }}></div>
-          
-          <div className="position-relative z-index-1">
-            <h2 className="fw-bold mb-3">Sẵn Sàng Để Bắt Đầu?</h2>
-            <p className="lead mb-4 opacity-75 max-w-md mx-auto">Trang bị cho mình những vật dụng tốt nhất ngay hôm nay để sẵn sàng bứt phá mọi giới hạn.</p>
-            <Link to="/products" className="btn btn-light btn-lg text-danger fw-bold rounded-pill px-5 shadow-sm d-inline-flex align-items-center gap-2">
-              Mua Sắm Ngay <ArrowRight size={20} />
-            </Link>
-          </div>
+        {/* --- PREMIUM CTA --- */}
+        <div className="mb-5 pb-5">
+            <div className="bg-dark text-white rounded-5 p-5 text-center position-relative overflow-hidden shadow-lg" style={{ borderRadius: '50px' }}>
+                <div className="position-absolute top-0 start-0 w-100 h-100" style={{ background: 'radial-gradient(circle at 10% 20%, rgba(217,119,6,0.3) 0%, transparent 40%)' }}></div>
+                <div className="position-absolute bottom-0 end-0 w-100 h-100" style={{ background: 'radial-gradient(circle at 90% 80%, rgba(255,255,255,0.05) 0%, transparent 40%)' }}></div>
+                
+                <div className="position-relative z-index-1 py-4">
+                    <h2 className="display-4 fw-black mb-3 text-uppercase tracking-tighter">BẮT ĐẦU HÀNH TRÌNH <br/> CỦA BẠN NGAY HÔM NAY</h2>
+                    <p className="lead mb-5 text-white-50 mx-auto" style={{ maxWidth: '600px' }}>Đừng chần chừ trước sự hoàn hảo. Trang bị cho mình những vật dụng tốt nhất để bứt phá mọi giới hạn.</p>
+                    <Link to="/products" className="btn btn-light rounded-pill px-5 py-3 fw-black text-uppercase shadow-lg d-inline-flex align-items-center gap-2">
+                        MUA SẮM NGAY <ArrowRight size={20} />
+                    </Link>
+                </div>
+            </div>
         </div>
 
       </div>

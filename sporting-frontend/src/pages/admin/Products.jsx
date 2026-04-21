@@ -1,25 +1,13 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import api from '../../api/axiosConfig';
 import { 
     FaEdit, FaTrash, FaPlus, FaSave, FaTimes, 
-    FaChevronLeft, FaChevronRight, FaSearch, FaUpload, FaPlusCircle
+    FaChevronLeft, FaChevronRight, FaSearch, FaCloudUploadAlt,
+    FaBox, FaInfoCircle, FaImage, FaCheckCircle
 } from 'react-icons/fa';
- 
-// =============================================
-// DANH SÁCH CỐ ĐỊNH - Chỉnh sửa tại đây
-// =============================================
-const BRAND_OPTIONS = [
-    'Nike', 'Adidas', 'Puma', 'New Balance', 'Converse',
-    'Vans', 'Reebok', 'Jordan', 'Fila', 'Biti\'s'
-];
- 
-const COLOR_OPTIONS = [
-    'Đen', 'Trắng', 'Đỏ', 'Xanh dương', 'Xanh lá',
-    'Vàng', 'Cam', 'Hồng', 'Tím', 'Xám', 'Be', 'Nâu'
-];
-// =============================================
- 
+
 const Products = () => {
+    // --- STATE ---
     const [products, setProducts] = useState([]);
     const [categories, setCategories] = useState([]);
     const [showForm, setShowForm] = useState(false);
@@ -27,355 +15,330 @@ const Products = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [page, setPage] = useState(0);
     const [totalPages, setTotalPages] = useState(0);
-    const [imagePreview, setImagePreview] = useState(null);
- 
+    const [loading, setLoading] = useState(false);
+
     const initialFormData = {
-        name: '', price: '', imgUrl: '', description: '', 
-        categoryId: '', brand: '', color: '',
-        productSizes: []
+        name: '', 
+        brand: 'Adidas',
+        price: '', 
+        description: '', 
+        categoryId: '',
+        sizeType: 'NUMERIC',
+        productSizes: [],
+        imgUrls: ['', '', '', ''], // Hỗ trợ tối đa 4 ảnh
+        color: 'Trắng'
     };
     const [formData, setFormData] = useState(initialFormData);
-    const [isShoeCategory, setIsShoeCategory] = useState(false);
- 
-    const [currentSize, setCurrentSize] = useState('');
-    const [currentQuantity, setCurrentQuantity] = useState(0);
- 
+    const fileInputRef = useRef(null);
+
+    // --- LOAD DATA ---
     const loadData = async () => {
+        setLoading(true);
         try {
-            const url = `/products?page=${page}&size=5&name=${encodeURIComponent(searchTerm)}`;
-            const [pRes, cRes] = await Promise.all([
-                api.get(url), 
-                api.get('/categories')
-            ]);
+            const url = `/products?page=${page}&size=10&keyword=${encodeURIComponent(searchTerm)}`;
+            const [pRes, cRes] = await Promise.all([api.get(url), api.get('/categories')]);
             setProducts(pRes.data.content || []);
             setTotalPages(pRes.data.totalPages || 0);
             setCategories(cRes.data || []);
-        } catch (err) { console.error("Lỗi tải dữ liệu:", err); }
+        } catch (err) {
+            console.error("Lỗi tải dữ liệu:", err);
+        } finally {
+            setLoading(false);
+        }
     };
- 
-    useEffect(() => { loadData(); }, [page]);
- 
-    const handleSearch = (e) => {
-        e.preventDefault();
-        setPage(0);
+
+    useEffect(() => {
         loadData();
-    };
- 
-    const handleCategoryChange = (e) => {
-        const selectedCategoryId = e.target.value;
-        setFormData({ ...formData, categoryId: selectedCategoryId, productSizes: [] });
-        const selectedCat = categories.find(c => c.id.toString() === selectedCategoryId);
-        const isShoe = selectedCat && (selectedCat.name.toLowerCase().includes("giày") || selectedCat.parent?.name.toLowerCase().includes("giày"));
-        setIsShoeCategory(isShoe);
-    };
-    
-    const handleAddSize = () => {
-        if (!currentSize || formData.productSizes.some(ps => ps.size === currentSize)) {
-            alert("Size không được rỗng hoặc đã tồn tại!");
-            return;
-        }
-        const newSize = { size: currentSize, quantity: parseInt(currentQuantity) || 0 };
-        setFormData({ ...formData, productSizes: [...formData.productSizes, newSize] });
-        setCurrentSize('');
-        setCurrentQuantity(0);
-    };
-    
-    const handleRemoveSize = (sizeToRemove) => {
-        setFormData({
-            ...formData,
-            productSizes: formData.productSizes.filter(ps => ps.size !== sizeToRemove)
-        });
-    };
- 
-    const handleImageChange = (e) => {
-        const file = e.target.files[0];
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = () => {
-                setImagePreview(reader.result);
-                setFormData({ ...formData, imgUrl: reader.result });
-            };
-            reader.readAsDataURL(file);
-        }
-    };
- 
+    }, [page, searchTerm]);
+
+    // --- HANDLERS ---
     const handleEdit = (p) => {
         setEditingId(p.id);
-        setImagePreview(p.imgUrl);
+        const catId = p.categories?.[0]?.id || '';
         
-        const categoryId = p.categories?.[0]?.id || '';
-        const selectedCat = categories.find(c => c.id.toString() === categoryId.toString());
-        const isShoe = selectedCat && (selectedCat.name.toLowerCase().includes("giày") || selectedCat.parent?.name.toLowerCase().includes("giày"));
-        setIsShoeCategory(isShoe);
- 
+        // Pipeline Fix: Trích xuất ảnh từ Variant hoặc Product trực tiếp
+        const rawImgUrl = p.variants?.[0]?.imgUrl || p.imgUrl || '';
+        const splitUrls = rawImgUrl.split('|').map(u => u.trim());
+        const finalUrls = ['', '', '', ''];
+        splitUrls.forEach((url, i) => { if(i < 4) finalUrls[i] = url; });
+
         setFormData({
-            name: p.name, price: p.price, imgUrl: p.imgUrl, 
+            name: p.name,
+            brand: p.brand || 'Adidas',
+            price: p.price,
             description: p.description || '',
-            brand: p.brand || '', color: p.color || '',
-            categoryId: categoryId,
-            productSizes: p.productSizes?.map(s => ({ size: s.size, quantity: s.quantity })) || []
+            categoryId: catId,
+            sizeType: p.sizeType || 'NUMERIC',
+            productSizes: p.variants?.[0]?.productSizes?.map(s => ({ size: s.size, quantity: s.quantity })) || [],
+            imgUrls: finalUrls,
+            color: p.variants?.[0]?.color || 'Trắng'
         });
         setShowForm(true);
+        window.scrollTo({ top: 0, behavior: 'smooth' });
     };
- 
+
+    const handleDelete = async (id) => {
+        if (window.confirm("Bạn có chắc chắn muốn xóa sản phẩm này không?")) {
+            try {
+                await api.delete(`/products/${id}`);
+                loadData();
+            } catch (err) {
+                alert("Không thể xóa sản phẩm này.");
+            }
+        }
+    };
+
+    const handleFileChange = async (index, e) => {
+        const file = e.target.files[0];
+        if (file) {
+            if (file.size > 2 * 1024 * 1024) {
+                alert("Ảnh quá lớn! Vui lòng chọn ảnh dưới 2MB.");
+                return;
+            }
+            
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            
+            try {
+                const res = await api.post('/api/upload/product', uploadFormData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                const newUrls = [...formData.imgUrls];
+                newUrls[index] = res.data; // URL tương đối từ server
+                setFormData({ ...formData, imgUrls: newUrls });
+            } catch (err) {
+                alert("Lỗi upload ảnh: " + (err.response?.data || err.message));
+            }
+        }
+    };
+
     const handleSubmit = async (e) => {
         e.preventDefault();
-        const payload = { ...formData, categories: [{ id: formData.categoryId }] };
+        const combinedImgUrl = formData.imgUrls.filter(u => u.trim() !== '').join('|');
+        
+        const payload = { 
+            name: formData.name, 
+            price: formData.price, 
+            brand: formData.brand, 
+            description: formData.description,
+            imgUrl: combinedImgUrl,
+            sizeType: formData.sizeType,
+            categories: [{ id: formData.categoryId }],
+            variants: [{ color: formData.color, productSizes: formData.productSizes, imgUrl: combinedImgUrl }]
+        };
+
         try {
-            if (editingId) {
-                await api.put(`/products/${editingId}`, payload);
-            } else {
-                await api.post('/products', payload);
-            }
-            alert("Thao tác thành công!");
+            if (editingId) await api.put(`/products/${editingId}`, payload);
+            else await api.post('/products', payload);
+            alert("Lưu sản phẩm thành công!");
             resetForm();
             loadData();
-        } catch (err) { alert("Lỗi khi lưu sản phẩm!"); }
+        } catch (err) {
+            alert("Lỗi: " + (err.response?.data?.message || "Không thể lưu sản phẩm"));
+        }
     };
- 
+
     const resetForm = () => {
         setShowForm(false);
         setEditingId(null);
-        setImagePreview(null);
         setFormData(initialFormData);
-        setIsShoeCategory(false);
-        setCurrentSize('');
-        setCurrentQuantity(0);
     };
- 
+
+    const getImageUrl = (url) => {
+        if (!url) return 'https://via.placeholder.com/150?text=No+Image';
+        if (url.startsWith('http') || url.startsWith('data:')) return url;
+        return `http://localhost:8081${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
+    const getThumbnail = (p) => {
+        const urlString = p.variants?.[0]?.imgUrl || p.imgUrl || '';
+        const firstUrl = urlString.split('|')[0]?.trim();
+        return getImageUrl(firstUrl);
+    };
+
+    // --- RENDER ---
     return (
-        <div className="container-fluid p-4 bg-light min-vh-100">
-            {/* Header + Search Bar */}
-            <div className="row align-items-center mb-4">
-                <div className="col-md-4">
-                    <h3 className="fw-bold text-dark border-start border-4 border-primary ps-3 m-0">QUẢN LÝ SẢN PHẨM</h3>
-                </div>
-                <div className="col-md-5">
-                    <form onSubmit={handleSearch} className="d-flex shadow-sm rounded-pill overflow-hidden bg-white">
-                        <input type="text" className="form-control border-0 ps-4 shadow-none" placeholder="Tìm tên sản phẩm..." value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
-                        <button className="btn btn-white px-3" type="submit"><FaSearch className="text-primary" /></button>
-                    </form>
-                </div>
-                <div className="col-md-3 text-end">
-                    {!showForm && (<button className="btn btn-primary shadow-sm px-4 fw-bold rounded-pill" onClick={() => setShowForm(true)}><FaPlus className="me-2" /> THÊM MỚI</button>)}
-                </div>
+        <div className="container-fluid">
+            <div className="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 className="h3 mb-0 text-gray-800">Quản lý Sản phẩm</h1>
+                <button className="btn btn-primary shadow-sm" onClick={() => setShowForm(true)}>
+                    <FaPlus className="me-2" /> Thêm sản phẩm mới
+                </button>
             </div>
- 
-            {/* Form Thêm/Sửa */}
+
+            {/* Redesigned Form Section (2-Column Layout) */}
             {showForm && (
-                <div className="card border-0 shadow-lg mb-5" style={{ borderRadius: '20px' }}>
-                    <div className="card-body p-4 p-md-5">
-                        <div className="d-flex justify-content-between align-items-center mb-4 border-bottom pb-2">
-                            <h5 className="fw-bold m-0 text-primary">{editingId ? "CẬP NHẬT SẢN PHẨM" : "THÊM SẢN PHẨM MỚI"}</h5>
-                            <button className="btn btn-light rounded-circle" onClick={resetForm}><FaTimes /></button>
-                        </div>
+                <div className="card shadow mb-4">
+                    <div className="card-header py-3 d-flex justify-content-between align-items-center bg-primary text-white">
+                        <h6 className="m-0 font-weight-bold">
+                            {editingId ? "Chỉnh sửa sản phẩm" : "Thêm sản phẩm mới"}
+                        </h6>
+                        <button className="btn btn-link text-white p-0" onClick={resetForm}><FaTimes /></button>
+                    </div>
+                    <div className="card-body">
                         <form onSubmit={handleSubmit}>
-                            <div className="row g-4">
-                                {/* Cột bên trái: Ảnh */}
-                                <div className="col-md-4">
-                                    <div className="border-dashed rounded-4 p-3 text-center bg-light position-relative" style={{ border: '2px dashed #ccc', minHeight: '300px' }}>
-                                        {imagePreview 
-                                            ? <img src={imagePreview} className="img-fluid rounded shadow-sm mb-2" style={{ maxHeight: '250px' }} alt="Preview" />
-                                            : <div className="py-5 text-muted"><FaUpload size={40} className="mb-2 opacity-50" /><p className="small">Chưa có ảnh</p></div>
-                                        }
-                                        <input type="file" className="form-control form-control-sm" accept="image/*" onChange={handleImageChange} />
-                                        <label className="small text-secondary mt-2 d-block">Chọn ảnh từ thiết bị</label>
-                                    </div>
-                                </div>
- 
-                                {/* Cột bên phải: Thông tin */}
-                                <div className="col-md-8">
+                            <div className="row">
+                                {/* LEFT COLUMN: Basic Info */}
+                                <div className="col-lg-7 border-end">
+                                    <h5 className="h6 font-weight-bold text-primary mb-3"><FaInfoCircle className="me-2"/> Thông tin cơ bản</h5>
                                     <div className="row g-3">
-                                        {/* Tên sản phẩm */}
                                         <div className="col-12">
-                                            <label className="small fw-bold text-secondary">Tên sản phẩm</label>
-                                            <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                            <label className="form-label small font-weight-bold">Tên sản phẩm</label>
+                                            <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} placeholder="VD: Giày Adidas Ultraboost" />
                                         </div>
- 
-                                        {/* Thương hiệu - dropdown */}
                                         <div className="col-md-6">
-                                            <label className="small fw-bold text-secondary">Thương hiệu</label>
-                                            <select
-                                                className="form-select"
-                                                value={formData.brand}
-                                                onChange={e => setFormData({...formData, brand: e.target.value})}
-                                            >
-                                                <option value="">-- Chọn thương hiệu --</option>
-                                                {BRAND_OPTIONS.map(b => (
-                                                    <option key={b} value={b}>{b}</option>
-                                                ))}
+                                            <label className="form-label small font-weight-bold">Thương hiệu</label>
+                                            <select className="form-select" value={formData.brand} onChange={e => setFormData({...formData, brand: e.target.value})}>
+                                                {['Adidas', 'Nike', 'Puma', 'Jordan', 'Reebok'].map(b => <option key={b} value={b}>{b}</option>)}
                                             </select>
                                         </div>
- 
-                                        {/* Màu sắc - dropdown */}
                                         <div className="col-md-6">
-                                            <label className="small fw-bold text-secondary">Màu sắc</label>
-                                            <select
-                                                className="form-select"
-                                                value={formData.color}
-                                                onChange={e => setFormData({...formData, color: e.target.value})}
-                                            >
-                                                <option value="">-- Chọn màu sắc --</option>
-                                                {COLOR_OPTIONS.map(c => (
-                                                    <option key={c} value={c}>{c}</option>
-                                                ))}
+                                            <label className="form-label small font-weight-bold">Danh mục</label>
+                                            <select className="form-select" required value={formData.categoryId} onChange={e => setFormData({...formData, categoryId: e.target.value})}>
+                                                <option value="">Chọn danh mục...</option>
+                                                {categories.map(c => <option key={c.id} value={c.id}>{c.name}</option>)}
                                             </select>
                                         </div>
- 
-                                        {/* Giá bán */}
                                         <div className="col-md-6">
-                                            <label className="small fw-bold text-secondary">Giá bán (đ)</label>
+                                            <label className="form-label small font-weight-bold">Giá bán (VNĐ)</label>
                                             <input type="number" className="form-control" required value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} />
                                         </div>
- 
-                                        {/* Danh mục */}
                                         <div className="col-md-6">
-                                            <label className="small fw-bold text-secondary">Danh mục</label>
-                                            <select className="form-select" required value={formData.categoryId} onChange={handleCategoryChange}>
-                                                <option value="">-- Chọn loại --</option>
-                                                {categories.filter(c => !c.parent).map(root => {
-                                                    const children = categories.filter(child => child.parent && child.parent.id === root.id);
-                                                    if (children.length > 0) {
-                                                        return (
-                                                            <optgroup key={root.id} label={root.name}>
-                                                                <option value={root.id}>{root.name} (Chung)</option>
-                                                                {children.map(child => (
-                                                                    <option key={child.id} value={child.id}>{child.name}</option>
-                                                                ))}
-                                                            </optgroup>
-                                                        );
-                                                    } else {
-                                                        return <option key={root.id} value={root.id}>{root.name}</option>;
-                                                    }
-                                                })}
-                                            </select>
+                                            <label className="form-label small font-weight-bold">Màu sắc</label>
+                                            <input type="text" className="form-control" value={formData.color} onChange={e => setFormData({...formData, color: e.target.value})} />
                                         </div>
- 
-                                        {/* Mô tả chi tiết */}
                                         <div className="col-12">
-                                            <label className="small fw-bold text-secondary">Mô tả chi tiết sản phẩm</label>
-                                            <textarea
-                                                className="form-control"
-                                                rows={5}
-                                                placeholder="Nhập mô tả chi tiết về sản phẩm: chất liệu, công nghệ, phong cách, hướng dẫn sử dụng..."
-                                                value={formData.description}
-                                                onChange={e => setFormData({...formData, description: e.target.value})}
-                                                style={{ resize: 'vertical' }}
-                                            />
-                                            <div className="text-end">
-                                                <small className="text-muted">{formData.description.length} ký tự</small>
-                                            </div>
-                                        </div>
- 
-                                        {/* Khu vực nhập Size/Số lượng động */}
-                                        <div className="col-12 mt-3">
-                                            <label className="small fw-bold d-block mb-2 text-dark">CẤU HÌNH TỒN KHO</label>
-                                            <div className='p-3 border rounded bg-light'>
-                                                <div className="row g-2 align-items-center mb-3">
-                                                    <div className="col">
-                                                        <input type="text" className="form-control" value={currentSize} onChange={e => setCurrentSize(e.target.value)} placeholder={isShoeCategory ? "Nhập size số (vd: 40)" : "Nhập size chữ (vd: M)"}/>
-                                                    </div>
-                                                    <div className="col">
-                                                        <input type="number" className="form-control" value={currentQuantity} onChange={e => setCurrentQuantity(e.target.value)} placeholder="Số lượng"/>
-                                                    </div>
-                                                    <div className="col-auto">
-                                                        <button type="button" className="btn btn-success" onClick={handleAddSize}><FaPlusCircle/></button>
-                                                    </div>
-                                                </div>
-                                                <div className="d-flex flex-wrap gap-2">
-                                                    {formData.productSizes.map(ps => (
-                                                        <div key={ps.size} className="badge bg-dark d-flex align-items-center gap-2">
-                                                            <span className="fw-bold">{ps.size}</span>
-                                                            <span className="badge bg-white text-dark">{ps.quantity}</span>
-                                                            <button type="button" className="btn-close btn-close-white ms-1" style={{fontSize: '0.6rem'}} onClick={() => handleRemoveSize(ps.size)}></button>
-                                                        </div>
-                                                    ))}
-                                                </div>
-                                            </div>
+                                            <label className="form-label small font-weight-bold">Mô tả</label>
+                                            <textarea className="form-control" rows="3" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
                                         </div>
                                     </div>
                                 </div>
- 
-                                <div className="col-12 text-end mt-4">
-                                    <button type="button" className="btn btn-light me-2 fw-bold" onClick={resetForm}>HỦY BỎ</button>
-                                    <button type="submit" className="btn btn-dark px-5 fw-bold"><FaSave className="me-2" /> LƯU SẢN PHẨM</button>
+
+                                {/* RIGHT COLUMN: Images & Preview */}
+                                <div className="col-lg-5">
+                                    <h5 className="h6 font-weight-bold text-primary mb-3"><FaImage className="me-2"/> Hình ảnh sản phẩm</h5>
+                                    <div className="row g-2">
+                                        {formData.imgUrls.map((url, idx) => (
+                                            <div key={idx} className="col-6">
+                                                <div className="image-upload-box border rounded d-flex flex-column align-items-center justify-content-center p-2 position-relative bg-light" style={{ height: '150px' }}>
+                                                    {url ? (
+                                                        <>
+                                                            <img src={getImageUrl(url)} className="w-100 h-100 object-fit-cover rounded" alt="preview" />
+                                                            <button type="button" className="btn btn-danger btn-sm position-absolute top-0 end-0 m-1" onClick={() => {
+                                                                const newUrls = [...formData.imgUrls]; newUrls[idx] = ''; setFormData({...formData, imgUrls: newUrls});
+                                                            }}><FaTimes size={10}/></button>
+                                                        </>
+                                                    ) : (
+                                                        <label className="text-center cursor-pointer m-0" style={{ cursor: 'pointer' }}>
+                                                            <FaCloudUploadAlt size={30} className="text-primary mb-1" />
+                                                            <div className="small font-weight-bold">Tải ảnh {idx + 1}</div>
+                                                            <input type="file" className="d-none" accept="image/*" onChange={(e) => handleFileChange(idx, e)} />
+                                                        </label>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <div className="mt-3 alert alert-info py-2 small">
+                                        <FaInfoCircle className="me-1" /> Kéo thả hoặc click để chọn ảnh. Ưu tiên ảnh tỉ lệ 1:1.
+                                    </div>
                                 </div>
+                            </div>
+
+                            <div className="mt-4 text-end border-top pt-3">
+                                <button type="button" className="btn btn-secondary me-2" onClick={resetForm}>Hủy bỏ</button>
+                                <button type="submit" className="btn btn-primary px-4"><FaSave className="me-2"/> Lưu sản phẩm</button>
                             </div>
                         </form>
                     </div>
                 </div>
             )}
- 
-            {/* Bảng danh sách */}
-            <div className="card border-0 shadow-sm overflow-hidden" style={{ borderRadius: '15px' }}>
-                <table className="table table-hover align-middle mb-0">
-                    <thead className="table-dark text-uppercase small">
-                        <tr>
-                            <th className="ps-4">Sản phẩm</th>
-                            <th>Thương hiệu/Màu</th>
-                            <th>Loại</th>
-                            <th>Giá</th>
-                            <th>Kho hàng</th>
-                            <th className="text-end pe-4">Thao tác</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {products.length > 0 ? products.map(p => (
-                            <tr key={p.id}>
-                                <td className="ps-4">
-                                    <div className='d-flex align-items-center'>
-                                        <img src={p.imgUrl} width="45" height="60" className="object-fit-cover rounded border me-3" alt={p.name} />
-                                        <div>
-                                            <div className="fw-bold">{p.name}</div>
-                                            <div className="text-muted small">ID: #{p.id}</div>
-                                            {p.description && (
-                                                <div className="text-muted small text-truncate" style={{maxWidth: '200px'}} title={p.description}>
-                                                    {p.description}
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td>
-                                    <div>{p.brand || '---'}</div>
-                                    <div className='small text-muted'>{p.color || '---'}</div>
-                                </td>
-                                <td><span className="badge bg-secondary-subtle text-secondary border px-3">{p.categories?.[0]?.name || '---'}</span></td>
-                                <td className="text-danger fw-bold">{p.price?.toLocaleString()}đ</td>
-                                <td>
-                                    <div className="d-flex flex-wrap gap-1">
-                                        {p.productSizes?.sort((a,b) => a.size.localeCompare(b.size, undefined, {numeric: true})).map(s => (
-                                            <div key={s.id || s.size} className="text-center border rounded px-1 bg-light" style={{minWidth: '35px'}}>
-                                                <div className="fw-bold" style={{fontSize: '0.6rem'}}>{s.size}</div>
-                                                <div className="small">{s.quantity}</div>
+
+            {/* Standard Data Table Section */}
+            <div className="card shadow mb-4">
+                <div className="card-header py-3 d-flex justify-content-between align-items-center bg-white">
+                    <h6 className="m-0 font-weight-bold text-primary">Danh sách sản phẩm trong kho</h6>
+                    <div className="input-group" style={{ width: '250px' }}>
+                        <input type="text" className="form-control form-control-sm" placeholder="Tìm tên sản phẩm..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                        <span className="input-group-text bg-primary text-white border-0"><FaSearch size={12}/></span>
+                    </div>
+                </div>
+                <div className="card-body p-0">
+                    <div className="table-responsive">
+                        <table className="table table-hover mb-0 align-middle">
+                            <thead>
+                                <tr>
+                                    <th className="px-4">ID</th>
+                                    <th>Hình ảnh</th>
+                                    <th>Tên sản phẩm</th>
+                                    <th>Danh mục</th>
+                                    <th>Giá bán</th>
+                                    <th>Thương hiệu</th>
+                                    <th className="text-center">Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {loading ? (
+                                    <tr><td colSpan="7" className="text-center py-5"><div className="spinner-border text-primary"></div></td></tr>
+                                ) : products.length > 0 ? products.map(p => (
+                                    <tr key={p.id}>
+                                        <td className="px-4 text-muted font-weight-bold">#{p.id}</td>
+                                        <td>
+                                            <img 
+                                                src={getThumbnail(p)} 
+                                                className="product-thumb" 
+                                                alt={p.name}
+                                                onError={(e) => { e.target.src = 'https://via.placeholder.com/150?text=Error'; }}
+                                            />
+                                        </td>
+                                        <td>
+                                            <div className="font-weight-bold text-dark">{p.name}</div>
+                                            <div className="small text-muted">{p.variants?.[0]?.color || 'Màu mặc định'}</div>
+                                        </td>
+                                        <td>
+                                            <span className="badge bg-light text-primary border border-primary px-2 py-1">
+                                                {p.categories?.[0]?.name || 'Chưa phân loại'}
+                                            </span>
+                                        </td>
+                                        <td className="font-weight-bold text-dark">
+                                            {p.price?.toLocaleString()}đ
+                                        </td>
+                                        <td>{p.brand}</td>
+                                        <td className="text-center">
+                                            <div className="btn-group shadow-sm">
+                                                <button className="btn btn-white btn-sm text-primary border" title="Chỉnh sửa" onClick={() => handleEdit(p)}>
+                                                    <FaEdit />
+                                                </button>
+                                                <button className="btn btn-white btn-sm text-danger border" title="Xóa" onClick={() => handleDelete(p.id)}>
+                                                    <FaTrash />
+                                                </button>
                                             </div>
-                                        ))}
-                                    </div>
-                                </td>
-                                <td className="text-end pe-4">
-                                    <button className="btn btn-sm btn-outline-primary me-2" onClick={() => handleEdit(p)}><FaEdit /></button>
-                                    <button className="btn btn-sm btn-outline-danger" onClick={async () => {
-                                        if(window.confirm("Xác nhận xóa sản phẩm này?")) {
-                                            await api.delete(`/products/${p.id}`);
-                                            loadData();
-                                        }
-                                    }}><FaTrash /></button>
-                                </td>
-                            </tr>
-                        )) : (
-                            <tr><td colSpan="6" className="text-center py-5 text-muted">Không tìm thấy sản phẩm nào</td></tr>
-                        )}
-                    </tbody>
-                </table>
-                {/* Phân trang */}
-                <div className="d-flex justify-content-center align-items-center p-3 border-top bg-light gap-3">
-                    <button className="btn btn-sm btn-outline-dark rounded-circle" disabled={page === 0} onClick={() => setPage(page - 1)}><FaChevronLeft /></button>
-                    <span className="small fw-bold">Trang {page + 1} / {totalPages}</span>
-                    <button className="btn btn-sm btn-outline-dark rounded-circle" disabled={page + 1 >= totalPages} onClick={() => setPage(page + 1)}><FaChevronRight /></button>
+                                        </td>
+                                    </tr>
+                                )) : (
+                                    <tr><td colSpan="7" className="text-center py-4">Không tìm thấy sản phẩm nào.</td></tr>
+                                )}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {/* Pagination Footer */}
+                <div className="card-footer bg-white border-top-0 d-flex justify-content-between align-items-center">
+                    <span className="small text-muted">Trang {page + 1} / {totalPages}</span>
+                    <nav>
+                        <ul className="pagination pagination-sm mb-0 shadow-sm">
+                            <li className={`page-item ${page === 0 ? 'disabled' : ''}`}>
+                                <button className="page-link" onClick={() => setPage(page - 1)}><FaChevronLeft size={10}/></button>
+                            </li>
+                            <li className={`page-item ${page + 1 >= totalPages ? 'disabled' : ''}`}>
+                                <button className="page-link" onClick={() => setPage(page + 1)}><FaChevronRight size={10}/></button>
+                            </li>
+                        </ul>
+                    </nav>
                 </div>
             </div>
         </div>
     );
 };
- 
+
 export default Products;
