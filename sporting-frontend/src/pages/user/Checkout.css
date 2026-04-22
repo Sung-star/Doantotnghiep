@@ -180,3 +180,77 @@ hr {
   border: none;
   border-top: 1px solid #e9ecef;
 }
+
+/* Premium Searchable Select Styling */
+.custom-select-premium {
+  border-color: #e9ecef !important;
+  background-color: #f8f9fa;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 0.95rem;
+  scrollbar-width: thin;
+  scrollbar-color: #0d6efd #f1f1f1;
+}
+
+.custom-select-premium:focus {
+  border-color: #0d6efd !important;
+  background-color: #fff;
+  box-shadow: 0 4px 12px rgba(13, 110, 253, 0.15) !important;
+}
+
+.custom-select-premium option {
+  padding: 12px;
+  background-color: #fff;
+  color: #333;
+}
+
+.custom-select-premium option:hover,
+.custom-select-premium option:focus {
+  background-color: #e9ecef !important;
+}
+
+/* Scrollbar customization for the select size list */
+.custom-select-premium::-webkit-scrollbar {
+  width: 6px;
+}
+
+.custom-select-premium::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-select-premium::-webkit-scrollbar-thumb {
+  background: #0d6efd;
+  border-radius: 10px;
+}
+
+.custom-select-premium::-webkit-scrollbar-thumb:hover {
+  background: #0b5ed7;
+}
+
+.input-group-text {
+  border-color: #e9ecef;
+  color: #6c757d;
+}
+
+.input-group:focus-within .input-group-text {
+  border-color: #0d6efd;
+  color: #0d6efd;
+}
+
+.border-dashed {
+  border-style: dashed !important;
+  border-width: 2px !important;
+  border-color: #dee2e6 !important;
+}
+
+/* Animation for the address breakdown section */
+.col-md-4 {
+  transition: opacity 0.3s ease, transform 0.3s ease;
+}
+
+.col-md-4[disabled] {
+  opacity: 0.5;
+  pointer-events: none;
+  transform: scale(0.98);
+}

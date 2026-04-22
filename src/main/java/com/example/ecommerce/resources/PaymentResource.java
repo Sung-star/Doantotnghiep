@@ -32,7 +32,7 @@ import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
 @RequestMapping("/api/payment")
-@CrossOrigin(origins = "http://localhost:5173") // Cổng mặc định của Vite
+@CrossOrigin(origins = "*")
 public class PaymentResource {
 
     @Autowired
@@ -154,15 +154,15 @@ public class PaymentResource {
             if ("00".equals(responseCode)) {
                 try {
                     orderService.updateStatus(Long.parseLong(orderId), OrderStatus.PAID);
-                    frontendUrl = "http://localhost:5173/payment-result?status=success&orderId=" + orderId;
+                    frontendUrl = "http://localhost:3000/payment-result?status=success&orderId=" + orderId;
                 } catch (Exception e) {
-                    frontendUrl = "http://localhost:5173/payment-result?status=error&message=OrderUpdateFailed";
+                    frontendUrl = "http://localhost:3000/payment-result?status=error&message=OrderUpdateFailed";
                 }
             } else {
-                frontendUrl = "http://localhost:5173/payment-result?status=failed&orderId=" + orderId;
+                frontendUrl = "http://localhost:3000/payment-result?status=failed&orderId=" + orderId;
             }
         } else {
-            frontendUrl = "http://localhost:5173/payment-result?status=error&message=InvalidSignature";
+            frontendUrl = "http://localhost:3000/payment-result?status=error&message=InvalidSignature";
         }
 
         return ResponseEntity.status(HttpStatus.FOUND)

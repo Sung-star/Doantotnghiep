@@ -26,6 +26,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 
 @Entity
@@ -63,6 +64,9 @@ public class User implements UserDetails, Serializable {
         inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     private Set<Product> wishlist = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserAddress> addresses = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "client")
@@ -185,6 +189,14 @@ public class User implements UserDetails, Serializable {
 
     public void setWishlist(Set<Product> wishlist) {
         this.wishlist = wishlist;
+    }
+
+    public List<UserAddress> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<UserAddress> addresses) {
+        this.addresses = addresses;
     }
 
     public List<Order> getOrders() {

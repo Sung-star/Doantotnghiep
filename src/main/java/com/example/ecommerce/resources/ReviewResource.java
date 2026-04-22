@@ -16,13 +16,19 @@ import org.springframework.web.bind.annotation.RestController;
 import com.example.ecommerce.entities.Review;
 import com.example.ecommerce.services.ReviewService;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/reviews")
+@RequestMapping(value = "/api/reviews")
 public class ReviewResource {
 
     @Autowired
     private ReviewService service;
+
+    @GetMapping
+    public ResponseEntity<List<Review>> findAll() {
+        List<Review> list = service.findAll();
+        return ResponseEntity.ok().body(list);
+    }
 
     @GetMapping(value = "/product/{productId}")
     public ResponseEntity<List<Review>> findByProductId(@PathVariable Long productId) {
@@ -34,6 +40,11 @@ public class ReviewResource {
     public ResponseEntity<Review> insert(@RequestBody Review obj) {
         obj = service.insert(obj);
         return ResponseEntity.ok().body(obj);
+    }
+
+    @GetMapping(value = "/can-review/{productId}/user/{userId}")
+    public ResponseEntity<Boolean> canReview(@PathVariable Long productId, @PathVariable Long userId) {
+        return ResponseEntity.ok(service.canUserReview(userId, productId));
     }
 
     @DeleteMapping(value = "/{id}")

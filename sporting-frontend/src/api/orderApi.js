@@ -71,7 +71,7 @@ export const getAllOrders = async (page = 0, size = 20) => {
 // Tạo link thanh toán VNPAY
 export const createVNPaymentLink = async (orderId, amount) => {
   try {
-    const response = await api.post('/api/payment/create-payment', {
+    const response = await api.post('/payment/create-payment', {
       orderId,
       amount
     });
@@ -85,7 +85,7 @@ export const createVNPaymentLink = async (orderId, amount) => {
 // Lấy kết quả thanh toán VNPAY
 export const getPaymentResult = async (queryParams) => {
   try {
-    const response = await api.get('/api/payment/payment-result', {
+    const response = await api.get('/payment/payment-result', {
       params: queryParams
     });
     return response.data;

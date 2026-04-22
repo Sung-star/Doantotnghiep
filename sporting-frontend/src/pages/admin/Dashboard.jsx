@@ -28,7 +28,7 @@ const AdminDashboard = () => {
 
                 const orders = Array.isArray(ordersRes.data) ? ordersRes.data : (ordersRes.data?.content || []);
                 const revenue = orders
-                    .filter(o => o.orderStatus === 'PAID' || o.orderStatus === 'DELIVERED')
+                    .filter(o => o.orderStatus === 'PAID' || o.orderStatus === 'DELIVERED' || o.orderStatus === 'COMPLETED')
                     .reduce((sum, order) => sum + (order.total || 0), 0);
 
                 setStats({

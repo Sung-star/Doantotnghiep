@@ -30,7 +30,7 @@ const AdminUsers = () => {
             uploadFormData.append('file', file);
             
             try {
-                const res = await api.post('/api/upload/avatar', uploadFormData, {
+                const res = await api.post('/upload/avatar', uploadFormData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 setFormData({ ...formData, imgUrl: res.data }); // URL từ server

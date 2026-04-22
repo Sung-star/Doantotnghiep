@@ -100,7 +100,7 @@ const Products = () => {
             uploadFormData.append('file', file);
             
             try {
-                const res = await api.post('/api/upload/product', uploadFormData, {
+                const res = await api.post('/upload/product', uploadFormData, {
                     headers: { 'Content-Type': 'multipart/form-data' }
                 });
                 const newUrls = [...formData.imgUrls];
@@ -210,6 +210,58 @@ const Products = () => {
                                         <div className="col-12">
                                             <label className="form-label small font-weight-bold">Mô tả</label>
                                             <textarea className="form-control" rows="3" value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})}></textarea>
+                                        </div>
+
+                                        {/* SIZE MANAGEMENT SECTION */}
+                                        <div className="col-12 mt-4">
+                                            <div className="d-flex justify-content-between align-items-center mb-3">
+                                                <h5 className="h6 font-weight-bold text-primary m-0"><FaBox className="me-2"/> Quản lý Tồn kho & Kích cỡ</h5>
+                                                <div className="btn-group btn-group-sm">
+                                                    <button type="button" className="btn btn-outline-primary" onClick={() => {
+                                                        const isShoes = categories.find(c => c.id == formData.categoryId)?.name?.toUpperCase().includes('GIÀY');
+                                                        let quickSizes = isShoes 
+                                                            ? [39, 40, 41, 42, 43].map(s => ({ size: String(s), quantity: 50 }))
+                                                            : ['S', 'M', 'L', 'XL'].map(s => ({ size: s, quantity: 100 }));
+                                                        setFormData({...formData, productSizes: quickSizes});
+                                                    }}>Tạo nhanh</button>
+                                                    <button type="button" className="btn btn-primary" onClick={() => setFormData({...formData, productSizes: [...formData.productSizes, { size: '', quantity: 0 }]})}><FaPlus size={10}/></button>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="table-responsive border rounded bg-white">
+                                                <table className="table table-sm table-borderless mb-0">
+                                                    <thead className="bg-light">
+                                                        <tr>
+                                                            <th className="small ps-3">Size</th>
+                                                            <th className="small">Số lượng</th>
+                                                            <th className="small text-center">Xóa</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {formData.productSizes.length > 0 ? formData.productSizes.map((s, idx) => (
+                                                            <tr key={idx} className="border-bottom">
+                                                                <td className="ps-3 py-2">
+                                                                    <input type="text" className="form-control form-control-sm" placeholder="VD: 42 hoặc XL" value={s.size} onChange={e => {
+                                                                        const newSizes = [...formData.productSizes]; newSizes[idx].size = e.target.value; setFormData({...formData, productSizes: newSizes});
+                                                                    }} />
+                                                                </td>
+                                                                <td className="py-2">
+                                                                    <input type="number" className="form-control form-control-sm" value={s.quantity} onChange={e => {
+                                                                        const newSizes = [...formData.productSizes]; newSizes[idx].quantity = parseInt(e.target.value); setFormData({...formData, productSizes: newSizes});
+                                                                    }} />
+                                                                </td>
+                                                                <td className="text-center py-2">
+                                                                    <button type="button" className="btn btn-link text-danger p-0" onClick={() => {
+                                                                        const newSizes = formData.productSizes.filter((_, i) => i !== idx); setFormData({...formData, productSizes: newSizes});
+                                                                    }}><FaTrash size={12}/></button>
+                                                                </td>
+                                                            </tr>
+                                                        )) : (
+                                                            <tr><td colSpan="3" className="text-center py-3 text-muted small">Chưa có thông tin kích cỡ. Hãy bấm "+" hoặc "Tạo nhanh".</td></tr>
+                                                        )}
+                                                    </tbody>
+                                                </table>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

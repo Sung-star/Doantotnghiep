@@ -3,7 +3,7 @@ import instance from '../../api/axiosConfig';
 import { 
   FaTrash, FaCheck, FaInfoCircle, FaSync, 
   FaUser, FaPhoneAlt, FaMapMarkerAlt, FaCalendarAlt,
-  FaReceipt, FaShippingFast, FaCheckCircle, FaExclamationCircle, FaTimes, FaEye
+  FaReceipt, FaShippingFast, FaCheckCircle, FaExclamationCircle, FaTimes, FaEye, FaClock
 } from 'react-icons/fa';
 
 const AdminOrders = () => {
@@ -45,13 +45,23 @@ const AdminOrders = () => {
 
     const getStatusLabel = (status) => {
         switch (status) {
+            case 'PENDING': return { text: 'Chờ duyệt', color: 'bg-warning', icon: <FaExclamationCircle /> };
+            case 'CONFIRMED': return { text: 'Đã xác nhận', color: 'bg-primary', icon: <FaCheck /> };
+            case 'SHIPPING': return { text: 'Đang giao hàng', color: 'bg-info', icon: <FaShippingFast /> };
+            case 'DELIVERED': return { text: 'Đã giao hàng', color: 'bg-success', icon: <FaCheckCircle /> };
+            case 'COMPLETED': return { text: 'Hoàn tất', color: 'bg-dark', icon: <FaCheckCircle /> };
+            case 'CANCELLED': return { text: 'Đã hủy', color: 'bg-danger', icon: <FaTimes /> };
             case 'PAID': return { text: 'Đã thanh toán', color: 'bg-success', icon: <FaCheckCircle /> };
-            case 'WAITING_PAYMENT': return { text: 'Chờ thanh toán', color: 'bg-warning', icon: <FaExclamationCircle /> };
-            case 'SHIPPED': return { text: 'Đang giao hàng', color: 'bg-primary', icon: <FaShippingFast /> };
-            case 'DELIVERED': return { text: 'Đã giao hàng', color: 'bg-info', icon: <FaCheckCircle /> };
-            case 'CANCELED': return { text: 'Đã hủy', color: 'bg-danger', icon: <FaTimes /> };
+            case 'WAITING_PAYMENT': return { text: 'Chờ thanh toán', color: 'bg-secondary', icon: <FaClock /> };
             default: return { text: status, color: 'bg-secondary', icon: null };
         }
+    };
+
+    const getImageUrl = (url) => {
+        if (!url) return 'https://placehold.co/50';
+        const firstUrl = url.split('|')[0].trim();
+        if (firstUrl.startsWith('http') || firstUrl.startsWith('data:')) return firstUrl;
+        return `http://localhost:8081${firstUrl}`;
     };
 
     return (
@@ -100,12 +110,14 @@ const AdminOrders = () => {
                                                         {status.text}
                                                     </button>
                                                     <ul className="dropdown-menu shadow">
-                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'WAITING_PAYMENT')}>Chờ thanh toán</button></li>
-                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'PAID')}>Đã thanh toán</button></li>
-                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'SHIPPED')}>Đang giao hàng</button></li>
-                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'DELIVERED')}>Đã giao hàng</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'PENDING')}>Chờ duyệt</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'CONFIRMED')}>Xác nhận đơn</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'SHIPPING')}>Giao hàng</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'DELIVERED')}>Đã nhận hàng</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'COMPLETED')}>Hoàn tất</button></li>
                                                         <li><hr className="dropdown-divider"/></li>
-                                                        <li><button className="dropdown-item small text-danger" onClick={() => handleUpdateStatus(o.id, 'CANCELED')}>Hủy đơn hàng</button></li>
+                                                        <li><button className="dropdown-item small" onClick={() => handleUpdateStatus(o.id, 'PAID')}>Xác nhận đã trả tiền</button></li>
+                                                        <li><button className="dropdown-item small text-danger" onClick={() => handleUpdateStatus(o.id, 'CANCELLED')}>Hủy đơn hàng</button></li>
                                                     </ul>
                                                 </div>
                                             </td>
@@ -161,24 +173,63 @@ const AdminOrders = () => {
                                     <div className="col-12">
                                         <h6 className="font-weight-bold text-primary border-bottom pb-2 mb-3">Danh sách sản phẩm</h6>
                                         <div className="table-responsive">
-                                            <table className="table table-sm table-bordered">
+                                            <table className="table table-hover align-middle border">
                                                 <thead className="table-light">
-                                                    <tr className="small text-uppercase">
+                                                    <tr className="small text-uppercase fw-bold text-muted">
+                                                        <th style={{width: '80px'}}>Ảnh</th>
                                                         <th>Sản phẩm</th>
                                                         <th className="text-center">Số lượng</th>
+                                                        <th className="text-center">Size</th>
                                                         <th className="text-end">Đơn giá</th>
                                                     </tr>
                                                 </thead>
                                                 <tbody>
                                                     {selectedOrder.items?.map((item, idx) => (
                                                         <tr key={idx}>
-                                                            <td>{item.product?.name}</td>
-                                                            <td className="text-center">{item.quantity}</td>
-                                                            <td className="text-end">{item.price?.toLocaleString()}đ</td>
+                                                            <td>
+                                                                <img 
+                                                                    src={getImageUrl(item.product?.imgUrl)} 
+                                                                    alt={item.product?.name} 
+                                                                    className="rounded shadow-sm"
+                                                                    style={{width: '50px', height: '60px', objectFit: 'cover'}}
+                                                                />
+                                                            </td>
+                                                            <td>
+                                                                <div className="fw-bold">{item.product?.name}</div>
+                                                                <small className="text-muted">{item.product?.brand}</small>
+                                                            </td>
+                                                            <td className="text-center fw-bold">{item.quantity}</td>
+                                                            <td className="text-center">
+                                                                <span className="badge bg-light text-dark border">{item.size || 'N/A'}</span>
+                                                            </td>
+                                                            <td className="text-end fw-bold">{item.price?.toLocaleString()}đ</td>
                                                         </tr>
                                                     ))}
                                                 </tbody>
                                             </table>
+                                        </div>
+
+                                        {/* Tổng kết tiền bạc minh bạch */}
+                                        <div className="mt-4 p-3 bg-light rounded-3 border">
+                                            <div className="d-flex justify-content-between mb-2">
+                                                <span className="text-muted">Tổng tiền hàng:</span>
+                                                <span className="fw-bold">{selectedOrder.items?.reduce((acc, i) => acc + (i.price * i.quantity), 0).toLocaleString()}đ</span>
+                                            </div>
+                                            <div className="d-flex justify-content-between mb-2">
+                                                <span className="text-muted">Phí vận chuyển:</span>
+                                                <span className="text-success fw-bold">+{selectedOrder.shippingFee?.toLocaleString() || 0}đ</span>
+                                            </div>
+                                            {selectedOrder.discountAmount > 0 && (
+                                                <div className="d-flex justify-content-between mb-2">
+                                                    <span className="text-muted">Giảm giá:</span>
+                                                    <span className="text-danger fw-bold">-{selectedOrder.discountAmount?.toLocaleString()}đ</span>
+                                                </div>
+                                            )}
+                                            <hr />
+                                            <div className="d-flex justify-content-between align-items-center">
+                                                <span className="fw-bold">TỔNG THANH TOÁN:</span>
+                                                <span className="fs-4 fw-black text-primary">{selectedOrder.total?.toLocaleString()}đ</span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>

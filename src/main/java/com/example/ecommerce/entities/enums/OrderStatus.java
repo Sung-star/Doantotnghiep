@@ -2,11 +2,14 @@ package com.example.ecommerce.entities.enums;
 
 public enum OrderStatus {
 	
-	WAITING_PAYMENT(1),
-	PAID(2),
-	SHIPPED(3),
+	PENDING(1),
+	CONFIRMED(2),
+	SHIPPING(3),
 	DELIVERED(4),
-	CANCELED(5);
+	COMPLETED(5),
+	CANCELLED(6),
+	PAID(7),
+	WAITING_PAYMENT(8);
 	
 	private int orderStatusCode;
 	
@@ -24,6 +27,6 @@ public enum OrderStatus {
 				return value;
 			}
 		}
-		throw new IllegalArgumentException("Invalid orderStatusCode");
+		throw new IllegalArgumentException("Invalid orderStatusCode: " + orderStatusCode);
 	}
 }

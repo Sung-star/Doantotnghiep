@@ -4,10 +4,11 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 
-import ChatAI from './components/common/ChatAI';
+import SupportCenter from './components/common/SupportCenter';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
 import { SuspenseWrapper } from './components/common/SuspenseWrapper';
+import FloatingActions from './components/common/FloatingActions';
 
 // Layout
 import Navbar from './components/layout/Navbar';
@@ -24,7 +25,7 @@ const Checkout = lazy(() => import('./pages/user/Checkout'));
 const Profile = lazy(() => import('./pages/user/Profile'));
 const Orders = lazy(() => import('./pages/user/Orders'));
 const Wishlist = lazy(() => import('./pages/user/Wishlist'));
-const PaymentResult = lazy(() => import('./pages/PaymentResult'));
+const PaymentResult = lazy(() => import('./pages/user/PaymentResult'));
 
 // Auth pages
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -38,6 +39,9 @@ const AdminOrders = lazy(() => import('./pages/admin/Orders'));
 const AdminUsers = lazy(() => import('./pages/admin/Users'));
 const AdminPayments = lazy(() => import('./pages/admin/Payments'));
 const AdminSizes = lazy(() => import('./pages/admin/Sizes'));
+const AdminVouchers = lazy(() => import('./pages/admin/Vouchers'));
+const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
+const AdminChat = lazy(() => import('./pages/admin/Chat'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -54,7 +58,8 @@ const LayoutWrapper = ({ children }) => {
       {!isAuthPage && !isAdminPage && <Navbar />}
       <main className="flex-grow-1">{children}</main>
       {!isAuthPage && !isAdminPage && <Footer />}
-      {!isAuthPage && !isAdminPage && <ChatAI />}
+      {!isAuthPage && !isAdminPage && <SupportCenter />}
+      {!isAuthPage && !isAdminPage && <FloatingActions />}
     </div>
   );
 };
@@ -95,6 +100,9 @@ function App() {
                   <Route path="users" element={<SuspenseWrapper><AdminUsers /></SuspenseWrapper>} />
                   <Route path="payments" element={<SuspenseWrapper><AdminPayments /></SuspenseWrapper>} />
                   <Route path="sizes" element={<SuspenseWrapper><AdminSizes /></SuspenseWrapper>} />
+                  <Route path="vouchers" element={<SuspenseWrapper><AdminVouchers /></SuspenseWrapper>} />
+                  <Route path="reviews" element={<SuspenseWrapper><AdminReviews /></SuspenseWrapper>} />
+                  <Route path="chat" element={<SuspenseWrapper><AdminChat /></SuspenseWrapper>} />
                 </Route>
                 <Route path="/payment-result" element={<SuspenseWrapper><PaymentResult /></SuspenseWrapper>} />
 

@@ -16,8 +16,8 @@ import org.springframework.web.client.RestTemplate;
 import com.example.ecommerce.services.ProductService;
 
 @RestController
-@RequestMapping(value = "/chat")
-@CrossOrigin(origins = "http://localhost:5173")
+@RequestMapping(value = "/api/chat")
+@CrossOrigin(origins = "*")
 public class ChatResource {
 
     @Autowired
@@ -41,13 +41,16 @@ public class ChatResource {
 
         try {
             var products = productService.findAll(PageRequest.of(0, 15)).getContent();
+            
+            String productSummary = products.stream()
+                .map(p -> String.format("ID:%d - %s (%.0f VNĐ)", p.getId(), p.getName(), p.getPrice()))
+                .collect(java.util.stream.Collectors.joining("\n"));
 
-            String prompt = "Bạn là nhân viên tư vấn của 'Sporting Shop'.\n"
-                    + "Danh sách sản phẩm: " + products.toString() + "\n"
-                    + "Yêu cầu: Khi giới thiệu sản phẩm, hãy LUÔN viết kèm mã này ở cuối câu trả lời: "
-                    + "[PRODUCT: ID|Tên|Giá|URL_Ảnh]\n"
-                    + "Hãy thay thế ID, Tên, Giá, URL_Ảnh tương ứng từ danh sách trên.\n"
-                    + "Khách hỏi: " + userMsg;
+            String prompt = "Bạn là trợ lý ảo của 'Sporting Shop' (chuyên đồ Adidas).\n"
+                    + "Danh sách sản phẩm tiêu biểu:\n" + productSummary + "\n\n"
+                    + "Hướng dẫn: Khi giới thiệu sản phẩm, hãy LUÔN thêm mã này ở cuối: [PRODUCT: ID|Tên|Giá|URL_Ảnh]\n"
+                    + "Hãy trả lời thân thiện, chuyên nghiệp bằng tiếng Việt.\n"
+                    + "Câu hỏi của khách: " + userMsg;
 
             Map<String, Object> textObj = Map.of("text", prompt);
             Map<String, Object> partsObj = Map.of("parts", List.of(textObj));

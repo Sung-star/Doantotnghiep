@@ -14,10 +14,10 @@ import jakarta.servlet.http.HttpServletRequest;
 
 public class VnPayConfig {
     public static String vnp_PayUrl = "https://sandbox.vnpayment.vn/paymentv2/vpcpay.html";
-    public static String vnp_TmnCode = "DC7H8U39"; 
-    public static String vnp_HashSecret = "H5XT7FL3U2LVJHN4J7SXUPXB9WELKPOX"; 
+    public static String vnp_TmnCode = "214V2XXA";
+    public static String vnp_HashSecret = "UFWZ2PON56P89Z4UW7WSEZDCI1NL01TE";
     public static String vnp_ApiUrl = "https://sandbox.vnpayment.vn/merchant_webapi/api/transaction";
-    
+
     // Thêm các hằng số phiên bản
     public static String vnp_Version = "2.1.0";
     public static String vnp_Command = "pay";
@@ -26,7 +26,7 @@ public class VnPayConfig {
     public static String hashAllFields(Map<String, String> fields) {
         List<String> fieldNames = new ArrayList<>(fields.keySet());
         Collections.sort(fieldNames);
-        
+
         StringBuilder sb = new StringBuilder();
         Iterator<String> itr = fieldNames.iterator();
         while (itr.hasNext()) {

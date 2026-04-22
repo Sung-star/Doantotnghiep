@@ -24,9 +24,9 @@ import com.example.ecommerce.services.ProductService;
 import java.util.List;
 import java.util.Set;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/products")
+@RequestMapping(value = "/api/products")
 public class ProductResource {
     
     @Autowired

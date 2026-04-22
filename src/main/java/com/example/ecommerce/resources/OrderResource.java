@@ -15,7 +15,7 @@ import jakarta.validation.Valid;
 
 @CrossOrigin(origins = "*") // Tránh lỗi CORS từ React
 @RestController
-@RequestMapping(value = "/orders")
+@RequestMapping(value = "/api/orders")
 public class OrderResource {
 	
     @Autowired

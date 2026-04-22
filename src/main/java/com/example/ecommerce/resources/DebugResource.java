@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 
 @CrossOrigin(origins = "*")
 @RestController
-@RequestMapping("/debug")
+@RequestMapping("/api/debug")
 public class DebugResource {
     @Autowired
     private ProductRepository productRepository;

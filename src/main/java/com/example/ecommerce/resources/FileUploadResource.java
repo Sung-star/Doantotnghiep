@@ -26,6 +26,11 @@ public class FileUploadResource {
         return uploadFile(file, "avatars");
     }
 
+    @PostMapping("/chat")
+    public ResponseEntity<String> uploadChatImage(@RequestParam("file") MultipartFile file) {
+        return uploadFile(file, "chat");
+    }
+
     private ResponseEntity<String> uploadFile(MultipartFile file, String subDir) {
         if (file.isEmpty()) {
             return ResponseEntity.badRequest().body("Vui lòng chọn file!");

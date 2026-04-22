@@ -16,9 +16,9 @@ import com.example.ecommerce.entities.Product;
 import com.example.ecommerce.services.GeminiService;
 import com.example.ecommerce.services.ProductService;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/search")
+@RequestMapping(value = "/api/search")
 public class SearchResource {
 
     @Autowired

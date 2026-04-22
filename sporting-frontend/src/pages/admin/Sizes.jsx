@@ -14,6 +14,13 @@ const AdminSizes = () => {
     const [editingCell, setEditingCell] = useState(null); // { productId, sizeId, value }
     const [saving, setSaving]           = useState(false);
 
+    const getImageUrl = (url) => {
+        if (!url) return 'https://via.placeholder.com/150?text=No+Img';
+        if (url.includes('|')) url = url.split('|')[0]; // Lấy ảnh đầu tiên nếu có nhiều ảnh
+        if (url.startsWith('http') || url.startsWith('data:')) return url;
+        return `http://localhost:8081${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+
     const PAGE_SIZE = 8;
 
     const fetchProducts = async () => {
@@ -66,11 +73,53 @@ const AdminSizes = () => {
             }));
             setEditingCell(null);
         } catch (err) {
-            // Nếu endpoint khác, thử PUT /products/{id}/sizes hoặc PATCH
             console.error('Lỗi cập nhật size:', err);
-            alert('Không thể cập nhật. Vui lòng kiểm tra endpoint backend!');
+            alert('Không thể cập nhật số lượng.');
         }
         setSaving(false);
+    };
+
+    const handleAddSize = async (productId) => {
+        const sizeName = prompt("Nhập kích cỡ mới (VD: 42, M, XL):");
+        if (!sizeName) return;
+        const quantity = prompt("Nhập số lượng ban đầu:", "0");
+        
+        try {
+            const res = await instance.post('/product-sizes', {
+                product: { id: productId },
+                size: sizeName,
+                quantity: parseInt(quantity) || 0
+            });
+            
+            setProducts(prev => prev.map(p => {
+                if (p.id !== productId) return p;
+                return {
+                    ...p,
+                    productSizes: [...(p.productSizes || []), res.data]
+                };
+            }));
+        } catch (err) {
+            console.error('Lỗi thêm size:', err);
+            alert('Lỗi: ' + (err.response?.data?.message || err.message));
+        }
+    };
+
+    const handleDeleteSize = async (sizeId, productId) => {
+        if (!window.confirm("Bạn có chắc muốn xóa kích cỡ này?")) return;
+        
+        try {
+            await instance.delete(`/product-sizes/${sizeId}`);
+            setProducts(prev => prev.map(p => {
+                if (p.id !== productId) return p;
+                return {
+                    ...p,
+                    productSizes: p.productSizes.filter(s => s.id !== sizeId)
+                };
+            }));
+        } catch (err) {
+            console.error('Lỗi xóa size:', err);
+            alert('Không thể xóa size này. Có thể nó đang được liên kết với đơn hàng.');
+        }
     };
 
     const stockBadge = (qty) => {
@@ -143,7 +192,7 @@ const AdminSizes = () => {
                             {/* Header sản phẩm */}
                             <div className="d-flex align-items-center gap-3 mb-3">
                                 <img
-                                    src={p.imgUrl}
+                                    src={getImageUrl(p.imgUrl || p.variants?.[0]?.imgUrl)}
                                     alt={p.name}
                                     width="48" height="60"
                                     className="rounded object-fit-cover border"
@@ -166,9 +215,9 @@ const AdminSizes = () => {
                             </div>
 
                             {/* Size chips */}
-                            {p.productSizes && p.productSizes.length > 0 ? (
-                                <div className="d-flex flex-wrap gap-2">
-                                    {p.productSizes
+                            <div className="d-flex flex-wrap gap-2 align-items-center">
+                                {p.productSizes && p.productSizes.length > 0 ? (
+                                    p.productSizes
                                         .slice()
                                         .sort((a, b) => a.size.localeCompare(b.size, undefined, { numeric: true }))
                                         .map(s => {
@@ -221,13 +270,31 @@ const AdminSizes = () => {
                                                             {s.quantity}
                                                         </span>
                                                     )}
+                                                    
+                                                    {!isEditing && (
+                                                        <button 
+                                                            className="btn btn-link text-danger p-0 position-absolute" 
+                                                            style={{ top: '-8px', right: '-8px', fontSize: '10px', background: '#fff', borderRadius: '50%', width: '16px', height: '16px', border: '1px solid #ff000033' }}
+                                                            onClick={(e) => { e.stopPropagation(); handleDeleteSize(s.id, p.id); }}
+                                                        >
+                                                            <FaTimes />
+                                                        </button>
+                                                    )}
                                                 </div>
                                             );
-                                        })}
-                                </div>
-                            ) : (
-                                <p className="text-muted small mb-0 fst-italic">Chưa có thông tin kích cỡ</p>
-                            )}
+                                        })
+                                ) : (
+                                    <span className="text-muted small fst-italic me-2">Chưa có thông tin kích cỡ</span>
+                                )}
+                                
+                                <button 
+                                    className="btn btn-outline-primary btn-sm rounded-3 px-3 d-flex align-items-center gap-1"
+                                    style={{ height: '42px', borderStyle: 'dashed' }}
+                                    onClick={() => handleAddSize(p.id)}
+                                >
+                                    + Thêm size
+                                </button>
+                            </div>
                         </div>
                     </div>
                 ))}

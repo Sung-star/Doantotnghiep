@@ -3,7 +3,8 @@ import { Outlet, Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../contexts/AuthContext';
 import { 
     FaTachometerAlt, FaBox, FaList, FaShoppingCart, 
-    FaUsers, FaSignOutAlt, FaBars, FaUserCircle, FaSearch 
+    FaUsers, FaSignOutAlt, FaBars, FaUserCircle, FaSearch,
+    FaTicketAlt, FaCreditCard, FaRuler, FaStar, FaCommentDots
 } from 'react-icons/fa';
 
 const AdminLayout = () => {
@@ -11,6 +12,12 @@ const AdminLayout = () => {
     const navigate = useNavigate();
     const location = useLocation();
     const savedUser = JSON.parse(localStorage.getItem('user') || '{}');
+
+    const getAvatar = (url, name) => {
+        if (!url) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name || 'A')}&background=0d6efd&color=fff&bold=true`;
+        if (url.startsWith('http') || url.startsWith('data:')) return url;
+        return `http://localhost:8081${url.startsWith('/') ? '' : '/'}${url}`;
+    };
 
     const handleLogout = () => {
         logout();
@@ -59,6 +66,9 @@ const AdminLayout = () => {
                     flex: 1;
                     background-color: #f8f9fc;
                     min-height: 100vh;
+                    display: flex;
+                    flex-direction: column;
+                    overflow: visible; /* Cho phép nội dung tràn ra ngoài để toàn trang cuộn */
                 }
                 .topbar {
                     height: 70px;
@@ -70,6 +80,18 @@ const AdminLayout = () => {
                     border: none;
                     box-shadow: 0 .15rem 1.75rem 0 rgba(58,59,69,.15);
                     border-radius: 8px;
+                    overflow: visible !important; /* Quan trọng: để dropdown không bị cắt */
+                }
+                /* Sửa lỗi dropdown bị cắt trong table-responsive */
+                .table-responsive {
+                    overflow: visible !important;
+                    padding-bottom: 60px; /* Tạo khoảng trống cho dropdown ở dòng cuối */
+                }
+                @media (max-width: 768px) {
+                    .table-responsive {
+                        overflow-x: auto !important;
+                        overflow-y: visible !important;
+                    }
                 }
                 .btn-primary { background-color: var(--primary-color); border: none; }
                 .btn-sm { border-radius: 4px; padding: .25rem .5rem; }
@@ -121,6 +143,31 @@ const AdminLayout = () => {
                             <FaUsers /> Người dùng
                         </Link>
                     </li>
+                    <li className="nav-item">
+                        <Link to="/admin/vouchers" className={`nav-link ${isActive('/admin/vouchers')}`}>
+                            <FaTicketAlt /> Mã giảm giá
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/admin/payments" className={`nav-link ${isActive('/admin/payments')}`}>
+                            <FaCreditCard /> Thanh toán
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/admin/sizes" className={`nav-link ${isActive('/admin/sizes')}`}>
+                            <FaRuler /> Quản lý Size
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/admin/reviews" className={`nav-link ${isActive('/admin/reviews')}`}>
+                            <FaStar /> Đánh giá
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/admin/chat" className={`nav-link ${isActive('/admin/chat')}`}>
+                            <FaCommentDots /> Chat khách hàng
+                        </Link>
+                    </li>
                 </ul>
                 <div className="mt-auto p-3">
                     <button onClick={handleLogout} className="btn btn-outline-light btn-sm w-100 d-flex align-items-center justify-content-center gap-2">
@@ -149,8 +196,13 @@ const AdminLayout = () => {
                             <div className="fw-bold text-dark small">{savedUser.name || 'Admin'}</div>
                             <div className="text-muted" style={{ fontSize: '11px' }}>Quản trị viên</div>
                         </div>
-                        <div className="text-primary fs-3">
-                            <FaUserCircle />
+                        <div className="flex-shrink-0">
+                            <img 
+                                src={getAvatar(savedUser.imgUrl, savedUser.name)} 
+                                className="rounded-circle border border-2 border-white shadow-sm"
+                                style={{ width: '40px', height: '40px', objectFit: 'cover' }}
+                                alt="admin"
+                            />
                         </div>
                     </div>
                 </header>

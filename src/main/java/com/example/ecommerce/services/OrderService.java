@@ -48,6 +48,9 @@ public class OrderService {
     @Autowired
     private VoucherRepository voucherRepository;
 
+    @Autowired
+    private EmailService emailService;
+
     public List<Order> findAll() {
         return repository.findAll();
     }
@@ -77,7 +80,12 @@ public class OrderService {
             Payment pay = new Payment(null, Instant.now(), order);
             order.setPayment(pay);
         }
-        return repository.save(order);
+        order = repository.save(order);
+        
+        // Trigger status update email
+        emailService.sendStatusUpdate(order);
+        
+        return order;
     }
 
     // --- ĐẶT HÀNG MỚI (LOGIC MỚI: DÙNG TÊN SIZE DẠNG STRING) ---
@@ -88,7 +96,7 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
 
         // 2. Khởi tạo đơn hàng mới
-        Order order = new Order(null, Instant.now(), OrderStatus.WAITING_PAYMENT, client);
+        Order order = new Order(null, Instant.now(), OrderStatus.PENDING, client);
         
         // Lưu thông tin giao hàng
         order.setShippingName(dto.getShippingName());
@@ -144,6 +152,9 @@ public class OrderService {
             // Lưu tên Size (String) vào chi tiết đơn hàng
             item.setSize(productSize.getSize()); 
 
+            // QUAN TRỌNG: Thêm vào collection trong bộ nhớ để calculateDiscount thấy được items
+            order.getItems().add(item);
+
             orderItemRepository.save(item);
         }
 
@@ -156,16 +167,30 @@ public class OrderService {
             repository.save(order); // Update discount
         }
 
-        return repository.save(order);
+        Order finalOrder = repository.save(order);
+        
+        // Trigger order confirmation email
+        emailService.sendOrderConfirmation(finalOrder);
+
+        return finalOrder;
     }
 
     private double calculateShippingFee(String address) {
-        if (address == null) return 50000.0; // Default
+        if (address == null) return 40000.0;
         String addr = address.toLowerCase();
-        if (addr.contains("hà nội") || addr.contains("hn")) {
+        
+        // Simulating distance-based fee (Adidas Level)
+        // North (Hà Nội & surrounding)
+        if (addr.contains("hà nội") || addr.contains("hải phòng") || addr.contains("bắc ninh") || addr.contains("hưng yên")) {
             return 30000.0;
-        } else {
-            return 50000.0;
+        } 
+        // South (TP.HCM & surrounding)
+        else if (addr.contains("hồ chí minh") || addr.contains("tphcm") || addr.contains("bình dương") || addr.contains("đồng nai")) {
+            return 35000.0;
+        }
+        // Central or Remote
+        else {
+            return 45000.0;
         }
     }
 

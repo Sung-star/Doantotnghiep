@@ -17,9 +17,9 @@ import com.example.ecommerce.repositories.RoleRepository;
 import com.example.ecommerce.repositories.UserRepository;
 import com.example.ecommerce.services.UserService;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/users")
+@RequestMapping(value = "/api/users")
 public class UserResource {
 
     @Autowired

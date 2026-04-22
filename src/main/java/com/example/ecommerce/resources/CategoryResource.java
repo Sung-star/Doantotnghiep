@@ -9,9 +9,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.example.ecommerce.entities.Category;
 import com.example.ecommerce.services.CategoryService;
 
-@CrossOrigin(origins = {"http://localhost:5173", "http://localhost:3000"})
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/categories")
+@RequestMapping(value = "/api/categories")
 public class CategoryResource {
     
     @Autowired
