@@ -11,10 +11,14 @@ export const CartProvider = ({ children }) => {
       return [];
     }
   });
+  const [isMiniCartOpen, setMiniCartOpen] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('clothing_cart', JSON.stringify(cartItems));
   }, [cartItems]);
+
+  const openMiniCart = () => setMiniCartOpen(true);
+  const closeMiniCart = () => setMiniCartOpen(false);
 
   const addToCart = (productToAdd) => {
     setCartItems((prevItems) => {
@@ -66,7 +70,7 @@ export const CartProvider = ({ children }) => {
   };
 
   return (
-    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getTotalPrice }}>
+    <CartContext.Provider value={{ cartItems, addToCart, removeFromCart, updateQuantity, clearCart, getTotalPrice, isMiniCartOpen, openMiniCart, closeMiniCart }}>
       {children}
     </CartContext.Provider>
   );

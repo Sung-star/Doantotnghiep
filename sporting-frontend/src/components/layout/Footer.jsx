@@ -9,7 +9,7 @@ const Footer = () => {
     <footer className="bg-dark text-white mt-auto border-top border-secondary">
       {/* Phần 1: Newsletter - Đăng ký nhận tin */}
       <div className="bg-black py-4 border-bottom border-secondary">
-        <div className="container">
+        <div className="container-fluid px-md-5">
           <div className="row align-items-center">
             <div className="col-lg-6 mb-3 mb-lg-0">
               <h5 className="mb-1 fw-bold">Đăng ký nhận bản tin thời trang</h5>
@@ -32,7 +32,7 @@ const Footer = () => {
       </div>
 
       {/* Phần 2: Nội dung chính */}
-      <div className="container py-5">
+      <div className="container-fluid px-md-5 py-5">
         <div className="row g-4">
           {/* Cột 1: Thương hiệu */}
           <div className="col-lg-4">

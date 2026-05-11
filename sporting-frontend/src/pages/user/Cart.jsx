@@ -56,7 +56,7 @@ const Cart = () => {
                       <div className="col-12 col-md-5 d-flex gap-3 align-items-center">
                         <Link to={`/product/${item.id}`} className="flex-shrink-0">
                           <img 
-                            src={item.imgUrl || 'https://placehold.co/100'} 
+                            src={item.image || (item.imgUrl ? item.imgUrl.split('|')[0].trim() : 'https://placehold.co/100')} 
                             alt={item.name}
                             className="rounded-3 border"
                             style={{ width: '80px', height: '100px', objectFit: 'cover' }}

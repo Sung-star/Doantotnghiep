@@ -17,9 +17,9 @@ import com.example.ecommerce.repositories.RoleRepository;
 import com.example.ecommerce.repositories.UserRepository;
 import com.example.ecommerce.services.UserService;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/users")
+@RequestMapping(value = "/api/users")
 public class UserResource {
 
     @Autowired
@@ -61,6 +61,9 @@ public class UserResource {
         user.setPhone(request.getPhone());
         user.setPassword(passwordEncoder.encode(request.getPassword()));
         user.setActive(true);
+        if (request.getImgUrl() != null) {
+            user.setImgUrl(request.getImgUrl());
+        }
 
         Set<Role> roles = new HashSet<>();
         // Nếu không gửi role thì mặc định là ROLE_CLIENT
@@ -144,6 +147,7 @@ public class UserResource {
         private String phone;
         private String password;
         private String role;
+        private String imgUrl;
 
         public String getName() {
             return name;
@@ -183,6 +187,14 @@ public class UserResource {
 
         public void setRole(String role) {
             this.role = role;
+        }
+
+        public String getImgUrl() {
+            return imgUrl;
+        }
+
+        public void setImgUrl(String imgUrl) {
+            this.imgUrl = imgUrl;
         }
     }
 }

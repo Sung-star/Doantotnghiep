@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
 import jakarta.persistence.GeneratedValue;
@@ -25,6 +26,7 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 
 @Entity
@@ -40,6 +42,8 @@ public class User implements UserDetails, Serializable {
     private String email;
     private String phone;
     private String password;
+    @Column(columnDefinition = "LONGTEXT")
+    private String imgUrl; // Ảnh đại diện (Base64 hoặc URL)
     
     // THÊM TRƯỜNG NÀY ĐỂ QUẢN LÝ KHÓA TÀI KHOẢN
     private boolean active = true; 
@@ -60,6 +64,9 @@ public class User implements UserDetails, Serializable {
         inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     private Set<Product> wishlist = new HashSet<>();
+
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private List<UserAddress> addresses = new ArrayList<>();
 
     @JsonIgnore
     @OneToMany(mappedBy = "client")
@@ -160,6 +167,14 @@ public class User implements UserDetails, Serializable {
         this.active = active;
     }
 
+    public String getImgUrl() {
+        return imgUrl;
+    }
+
+    public void setImgUrl(String imgUrl) {
+        this.imgUrl = imgUrl;
+    }
+
     public Set<Role> getRoles() {
         return roles;
     }
@@ -174,6 +189,14 @@ public class User implements UserDetails, Serializable {
 
     public void setWishlist(Set<Product> wishlist) {
         this.wishlist = wishlist;
+    }
+
+    public List<UserAddress> getAddresses() {
+        return addresses;
+    }
+
+    public void setAddresses(List<UserAddress> addresses) {
+        this.addresses = addresses;
     }
 
     public List<Order> getOrders() {

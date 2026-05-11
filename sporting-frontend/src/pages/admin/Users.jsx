@@ -1,57 +1,75 @@
 import React, { useEffect, useState } from 'react';
 import userApi from '../../api/userApi';
+import api from '../../api/axiosConfig';
+import { 
+    FaUserPlus, FaUserEdit, FaUserShield, FaTrash, FaTimes, 
+    FaSave, FaSearch, FaEnvelope, FaPhoneAlt, FaUserCircle 
+} from 'react-icons/fa';
 
 const AdminUsers = () => {
-    // --- KHAI BÁO STATE ---
-    const [users, setUsers] = useState([]);           // Chứa danh sách user
-    const [loading, setLoading] = useState(true);     // Trạng thái load
-    const [showModal, setShowModal] = useState(false);// Ẩn/Hiện Popup
-    const [isEdit, setIsEdit] = useState(false);      // Đang thêm hay đang sửa?
+    const [users, setUsers] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [showModal, setShowModal] = useState(false);
+    const [isEdit, setIsEdit] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
     
-    // Dữ liệu form
     const [formData, setFormData] = useState({ 
         id: null, 
         name: '', 
         email: '', 
         phone: '', 
         password: '',
-        roleName: 'ROLE_CLIENT' // Mặc định là khách hàng
+        roleName: 'ROLE_CLIENT',
+        imgUrl: ''
     });
 
-    // --- 1. GỌI DỮ LIỆU TỪ SERVER (READ) ---
-    useEffect(() => {
-        fetchUsers();
-    }, []);
+    const handleImageChange = async (e) => {
+        const file = e.target.files[0];
+        if (file) {
+            const uploadFormData = new FormData();
+            uploadFormData.append('file', file);
+            
+            try {
+                const res = await api.post('/upload/avatar', uploadFormData, {
+                    headers: { 'Content-Type': 'multipart/form-data' }
+                });
+                setFormData({ ...formData, imgUrl: res.data }); // URL từ server
+            } catch (err) {
+                alert("Lỗi upload avatar: " + (err.response?.data || err.message));
+            }
+        }
+    };
 
     const fetchUsers = async () => {
         try {
+            setLoading(true);
             const response = await userApi.getAll();
-            setUsers(response.data); // Giả sử API trả về List<User>
+            setUsers(response.data);
             setLoading(false);
         } catch (error) {
-            console.error("Lỗi tải danh sách users:", error);
+            console.error("Lỗi tải users:", error);
             setLoading(false);
         }
     };
 
-    // --- 2. XỬ LÝ FORM (CREATE / UPDATE) ---
+    useEffect(() => { fetchUsers(); }, []);
+
     const handleAddNew = () => {
-        setFormData({ id: null, name: '', email: '', phone: '', password: '', roleName: 'ROLE_CLIENT' });
+        setFormData({ id: null, name: '', email: '', phone: '', password: '', roleName: 'ROLE_CLIENT', imgUrl: '' });
         setIsEdit(false);
         setShowModal(true);
     };
 
     const handleEdit = (user) => {
-        // Lấy role đầu tiên để hiển thị (đơn giản hóa)
-        const currentRole = user.roles && user.roles.length > 0 ? user.roles[0].name : 'ROLE_CLIENT';
-        
+        const currentRole = user.roles && user.roles.length > 0 ? (user.roles[0].name || user.roles[0].authority) : 'ROLE_CLIENT';
         setFormData({ 
             id: user.id, 
             name: user.name, 
             email: user.email, 
             phone: user.phone || '', 
-            password: '', // Không hiển thị mật khẩu cũ
-            roleName: currentRole
+            password: '',
+            roleName: currentRole,
+            imgUrl: user.imgUrl || ''
         });
         setIsEdit(true);
         setShowModal(true);
@@ -62,110 +80,110 @@ const AdminUsers = () => {
         try {
             if (isEdit) {
                 await userApi.update(formData.id, formData);
-                alert("✅ Cập nhật thành công!");
+                alert("Đã cập nhật tài khoản!");
             } else {
                 await userApi.create(formData);
-                alert("✅ Thêm mới thành công!");
+                alert("Đã tạo tài khoản mới!");
             }
-            setShowModal(false); // Đóng modal
-            fetchUsers();        // Load lại bảng
+            setShowModal(false);
+            fetchUsers();
         } catch (error) {
-            alert("❌ Có lỗi xảy ra: " + (error.response?.data?.message || error.message));
+            alert("Lỗi: " + (error.response?.data?.message || error.message));
         }
     };
 
-    // --- 3. XỬ LÝ XÓA (DELETE) ---
     const handleDelete = async (id) => {
-        if (window.confirm("⚠️ Bạn có chắc chắn muốn xóa người dùng này không?")) {
+        if (window.confirm("Bạn có chắc chắn muốn xóa tài khoản này?")) {
             try {
                 await userApi.delete(id);
                 fetchUsers();
-            } catch (error) {
-                alert("❌ Không thể xóa người dùng này.");
-            }
+            } catch (error) { alert("Không thể xóa tài khoản quản trị chính!"); }
         }
     };
 
-    // --- RENDER GIAO DIỆN ---
-    if (loading) return <div className="p-4 text-center">⏳ Đang tải dữ liệu...</div>;
+    const filteredUsers = users.filter(u => 
+        u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+        u.email.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const getAvatar = (user) => {
+        if (!user.imgUrl) return `https://ui-avatars.com/api/?name=${encodeURIComponent(user.name)}&background=4e73df&color=fff&bold=true`;
+        if (user.imgUrl.startsWith('http') || user.imgUrl.startsWith('data:')) return user.imgUrl;
+        return `http://localhost:8081${user.imgUrl.startsWith('/') ? '' : '/'}${user.imgUrl}`;
+    };
 
     return (
-        <div className="container-fluid mt-4">
-            {/* Header & Nút Thêm */}
-            <div className="d-flex justify-content-between align-items-center mb-4 p-3 bg-white rounded shadow-sm">
-                <h4 className="mb-0 text-primary fw-bold">👥 Quản Lý Người Dùng</h4>
-                <button className="btn btn-success" onClick={handleAddNew}>
-                    <i className="bi bi-plus-lg me-2"></i>+ Thêm Mới
-                </button>
+        <div className="container-fluid">
+            <div className="d-sm-flex align-items-center justify-content-between mb-4">
+                <h1 className="h3 mb-0 text-gray-800">Quản lý Người dùng</h1>
+                <div className="d-flex gap-2">
+                    <div className="input-group" style={{ width: '250px' }}>
+                        <input type="text" className="form-control form-control-sm" placeholder="Tìm tên hoặc email..." value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
+                        <span className="input-group-text bg-white border-start-0"><FaSearch size={12} className="text-muted"/></span>
+                    </div>
+                    <button className="btn btn-primary btn-sm shadow-sm" onClick={handleAddNew}>
+                        <FaUserPlus className="me-2" /> Thêm tài khoản
+                    </button>
+                </div>
             </div>
 
-            {/* Bảng Dữ Liệu */}
-            <div className="card shadow-sm border-0">
+            <div className="card shadow mb-4">
+                <div className="card-header py-3 bg-white">
+                    <h6 className="m-0 font-weight-bold text-primary">Danh sách tài khoản hệ thống</h6>
+                </div>
                 <div className="card-body p-0">
                     <div className="table-responsive">
-                        <table className="table table-hover align-middle mb-0">
-                            <thead className="bg-light text-secondary">
+                        <table className="table table-hover mb-0 align-middle">
+                            <thead>
                                 <tr>
-                                    <th className="ps-4">ID</th>
-                                    <th>Họ Tên</th>
-                                    <th>Email / SĐT</th>
-                                    <th>Vai Trò</th>
-                                    <th className="text-end pe-4">Hành Động</th>
+                                    <th className="px-4">Người dùng</th>
+                                    <th>Email</th>
+                                    <th>Số điện thoại</th>
+                                    <th>Vai trò</th>
+                                    <th className="text-center">Thao tác</th>
                                 </tr>
                             </thead>
                             <tbody>
-                                {users.map((user) => (
+                                {loading ? (
+                                    <tr><td colSpan="5" className="text-center py-5"><div className="spinner-border text-primary"></div></td></tr>
+                                ) : filteredUsers.length > 0 ? filteredUsers.map((user) => (
                                     <tr key={user.id}>
-                                        <td className="ps-4 fw-bold">#{user.id}</td>
-                                        <td>
+                                        <td className="px-4">
                                             <div className="d-flex align-items-center">
                                                 <img 
-                                                    src={`https://ui-avatars.com/api/?name=${user.name}&background=random`} 
-                                                    className="rounded-circle me-3" 
-                                                    width="35" alt="avt" 
+                                                    src={getAvatar(user)} 
+                                                    className="rounded-circle me-3 border" 
+                                                    width="40" height="40" alt="avatar" 
+                                                    onError={(e) => { e.target.src = 'https://via.placeholder.com/40'; }}
                                                 />
-                                                <span className="fw-bold text-dark">{user.name}</span>
+                                                <div>
+                                                    <div className="font-weight-bold text-dark">{user.name}</div>
+                                                    <div className="small text-muted">ID: #{user.id}</div>
+                                                </div>
                                             </div>
                                         </td>
+                                        <td>{user.email}</td>
+                                        <td>{user.phone || '---'}</td>
                                         <td>
-                                            <div className="small">{user.email}</div>
-                                            <div className="text-muted small">{user.phone}</div>
+                                            {user.roles && user.roles.some(r => (r.name || r.authority).includes('ADMIN')) ? (
+                                                <span className="badge bg-danger text-uppercase" style={{ fontSize: '10px' }}>
+                                                    <FaUserShield className="me-1" /> Admin
+                                                </span>
+                                            ) : (
+                                                <span className="badge bg-secondary text-uppercase" style={{ fontSize: '10px' }}>
+                                                    Khách hàng
+                                                </span>
+                                            )}
                                         </td>
-                                       {/* Thay đoạn hiển thị Badge cũ bằng đoạn này */}
-<td>
-    {user.roles && user.roles.some(r => 
-        (r.name === 'ROLE_ADMIN') || 
-        (r.authority === 'ROLE_ADMIN') || 
-        (r.name === 'ADMIN') // Phòng hờ trường hợp lưu thiếu chữ ROLE_
-    ) ? (
-        <span className="badge bg-danger">QUẢN TRỊ VIÊN</span>
-    ) : (
-        <span className="badge bg-info text-dark">KHÁCH HÀNG</span>
-    )}
-    
-    {/* Dòng này để Debug: In thẳng role ra màn hình xem nó là gì */}
-    <div style={{fontSize: '10px', color: '#888'}}>
-        {user.roles && user.roles.map(r => r.name || r.authority).join(', ')}
-    </div>
-</td>
-                                        <td className="text-end pe-4">
-                                            <button 
-                                                className="btn btn-sm btn-outline-primary me-2"
-                                                onClick={() => handleEdit(user)}
-                                            >
-                                                Sửa
-                                            </button>
-                                            <button 
-                                                className="btn btn-sm btn-outline-danger"
-                                                onClick={() => handleDelete(user.id)}
-                                            >
-                                                Xóa
-                                            </button>
+                                        <td className="text-center">
+                                            <div className="btn-group shadow-sm">
+                                                <button className="btn btn-white btn-sm text-primary border" onClick={() => handleEdit(user)}><FaUserEdit /></button>
+                                                <button className="btn btn-white btn-sm text-danger border" onClick={() => handleDelete(user.id)}><FaTrash /></button>
+                                            </div>
                                         </td>
                                     </tr>
-                                ))}
-                                {users.length === 0 && (
-                                    <tr><td colSpan="5" className="text-center py-4">Chưa có người dùng nào.</td></tr>
+                                )) : (
+                                    <tr><td colSpan="5" className="text-center py-4 text-muted">Không tìm thấy tài khoản nào.</td></tr>
                                 )}
                             </tbody>
                         </table>
@@ -173,78 +191,69 @@ const AdminUsers = () => {
                 </div>
             </div>
 
-            {/* --- MODAL (POPUP) THÊM/SỬA --- */}
+            {/* Modal Tài khoản */}
             {showModal && (
-                <>
-                    <div className="modal-backdrop fade show"></div>
-                    <div className="modal fade show d-block" tabIndex="-1">
-                        <div className="modal-dialog modal-dialog-centered">
-                            <div className="modal-content">
-                                <div className="modal-header bg-primary text-white">
-                                    <h5 className="modal-title">
-                                        {isEdit ? '✏️ Cập Nhật Thông Tin' : '➕ Thêm Người Dùng Mới'}
-                                    </h5>
-                                    <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
-                                </div>
-                                <form onSubmit={handleSave}>
-                                    <div className="modal-body">
-                                        <div className="mb-3">
-                                            <label className="form-label">Họ và Tên</label>
-                                            <input type="text" className="form-control" required
-                                                value={formData.name}
-                                                onChange={e => setFormData({...formData, name: e.target.value})}
-                                            />
-                                        </div>
-                                        <div className="row">
-                                            <div className="col-md-6 mb-3">
-                                                <label className="form-label">Email</label>
-                                                <input type="email" className="form-control" required
-                                                    value={formData.email}
-                                                    onChange={e => setFormData({...formData, email: e.target.value})}
-                                                />
-                                            </div>
-                                            <div className="col-md-6 mb-3">
-                                                <label className="form-label">Số Điện Thoại</label>
-                                                <input type="text" className="form-control"
-                                                    value={formData.phone}
-                                                    onChange={e => setFormData({...formData, phone: e.target.value})}
-                                                />
-                                            </div>
-                                        </div>
-                                        
-                                        <div className="mb-3">
-                                            <label className="form-label">Vai Trò</label>
-                                            <select className="form-select" 
-                                                value={formData.roleName}
-                                                onChange={e => setFormData({...formData, roleName: e.target.value})}
-                                            >
-                                                <option value="ROLE_CLIENT">Khách Hàng (Client)</option>
-                                                <option value="ROLE_ADMIN">Quản Trị Viên (Admin)</option>
-                                            </select>
-                                        </div>
-
-                                        <div className="mb-3">
-                                            <label className="form-label">
-                                                {isEdit ? 'Mật Khẩu Mới (Bỏ trống nếu không đổi)' : 'Mật Khẩu'}
-                                            </label>
-                                            <input type="password" className="form-control" 
-                                                required={!isEdit}
-                                                value={formData.password}
-                                                onChange={e => setFormData({...formData, password: e.target.value})}
-                                            />
-                                        </div>
-                                    </div>
-                                    <div className="modal-footer">
-                                        <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Đóng</button>
-                                        <button type="submit" className="btn btn-primary">
-                                            {isEdit ? 'Lưu Thay Đổi' : 'Tạo Mới'}
-                                        </button>
-                                    </div>
-                                </form>
+                <div className="modal show d-block" tabIndex="-1" style={{ backgroundColor: 'rgba(0,0,0,0.5)' }}>
+                    <div className="modal-dialog modal-dialog-centered">
+                        <div className="modal-content shadow border-0">
+                            <div className="modal-header bg-primary text-white">
+                                <h5 className="modal-title font-weight-bold">
+                                    {isEdit ? 'Chỉnh sửa tài khoản' : 'Tạo tài khoản mới'}
+                                </h5>
+                                <button type="button" className="btn-close btn-close-white" onClick={() => setShowModal(false)}></button>
                             </div>
+                            <form onSubmit={handleSave}>
+                                <div className="modal-body p-4">
+                                    <div className="text-center mb-4">
+                                        <div className="avatar-upload" style={{ width: '120px', height: '120px' }}>
+                                            <img 
+                                                src={getAvatar(formData)} 
+                                                className="avatar-preview"
+                                                alt="User Preview"
+                                            />
+                                            <label htmlFor="user-avatar-input" className="avatar-edit-btn">
+                                                <FaUserCircle size={16} />
+                                            </label>
+                                            <input id="user-avatar-input" type="file" hidden accept="image/*" onChange={handleImageChange} />
+                                        </div>
+                                        <p className="small text-muted mt-2">Tải lên ảnh đại diện</p>
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label small font-weight-bold">Họ và Tên</label>
+                                        <input type="text" className="form-control" required value={formData.name} onChange={e => setFormData({...formData, name: e.target.value})} />
+                                    </div>
+                                    <div className="row">
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label small font-weight-bold">Email</label>
+                                            <input type="email" className="form-control" required value={formData.email} onChange={e => setFormData({...formData, email: e.target.value})} />
+                                        </div>
+                                        <div className="col-md-6 mb-3">
+                                            <label className="form-label small font-weight-bold">Số điện thoại</label>
+                                            <input type="text" className="form-control" value={formData.phone} onChange={e => setFormData({...formData, phone: e.target.value})} />
+                                        </div>
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label small font-weight-bold">Vai trò hệ thống</label>
+                                        <select className="form-select" value={formData.roleName} onChange={e => setFormData({...formData, roleName: e.target.value})}>
+                                            <option value="ROLE_CLIENT">Khách hàng</option>
+                                            <option value="ROLE_ADMIN">Quản trị viên</option>
+                                        </select>
+                                    </div>
+                                    <div className="mb-3">
+                                        <label className="form-label small font-weight-bold">
+                                            {isEdit ? 'Mật khẩu mới (Để trống nếu không đổi)' : 'Mật khẩu khởi tạo'}
+                                        </label>
+                                        <input type="password" className="form-control" required={!isEdit} value={formData.password} onChange={e => setFormData({...formData, password: e.target.value})} />
+                                    </div>
+                                </div>
+                                <div className="modal-footer bg-light">
+                                    <button type="button" className="btn btn-secondary" onClick={() => setShowModal(false)}>Hủy bỏ</button>
+                                    <button type="submit" className="btn btn-primary px-4">Lưu thay đổi</button>
+                                </div>
+                            </form>
                         </div>
                     </div>
-                </>
+                </div>
             )}
         </div>
     );

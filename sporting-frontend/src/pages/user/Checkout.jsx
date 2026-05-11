@@ -4,211 +4,399 @@ import { useAuth } from '../../contexts/AuthContext';
 import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
 import { 
-  FaQrcode, FaMoneyBillWave, FaCheckCircle, 
-  FaMapMarkerAlt, FaUser, FaPhoneAlt, FaArrowLeft 
+  FaQrcode, FaMoneyBillWave, FaCheckCircle,
+  FaMapMarkerAlt, FaUser, FaPhoneAlt, FaArrowLeft,
+  FaChevronDown
 } from 'react-icons/fa';
+import './Checkout.css';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   
+  const [savedAddresses, setSavedAddresses] = useState([]);
+  const [showAddressModal, setShowAddressModal] = useState(false);
+  
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.name || '',
-    phone: '',
+    phone: user?.phone || '',
     address: ''
   });
   
   const [paymentMethod, setPaymentMethod] = useState('COD');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [appliedVoucher, setAppliedVoucher] = useState(null);
+  const [shippingFee, setShippingFee] = useState(0);
   const [orderResponse, setOrderResponse] = useState(null);
   const [loading, setLoading] = useState(false);
 
-  const MY_BANK = { 
-    ID: "MB", 
-    ACCOUNT_NO: "0335824996", 
-    ACCOUNT_NAME: "NGUYEN VAN AN" 
+  const [provinces, setProvinces] = useState([]);
+  const [districts, setDistricts] = useState([]);
+  const [wards, setWards] = useState([]);
+  
+  const [selectedProvince, setSelectedProvince] = useState('');
+  const [selectedDistrict, setSelectedDistrict] = useState('');
+  const [selectedWard, setSelectedWard] = useState('');
+  const [detailAddress, setDetailAddress] = useState('');
+
+  // Fetch saved addresses
+  useEffect(() => {
+    if (user?.id) {
+      api.get(`/addresses/user/${user.id}`)
+        .then(res => {
+          setSavedAddresses(res.data);
+          const defaultAddr = res.data.find(a => a.isDefault);
+          if (defaultAddr) {
+            applySavedAddress(defaultAddr);
+          }
+        })
+        .catch(err => console.error("Error fetching addresses:", err));
+    }
+  }, [user]);
+
+  const applySavedAddress = (addr) => {
+    setShippingInfo({
+      fullName: addr.fullName,
+      phone: addr.phone,
+      address: `${addr.detail}, ${addr.ward}, ${addr.district}, ${addr.province}`
+    });
+    setDetailAddress(addr.detail);
+    
+    // Attempt to match province/district/ward from strings
+    const p = provinces.find(prov => prov.name === addr.province);
+    if (p) {
+      setSelectedProvince(p.code);
+      fetch(`https://provinces.open-api.vn/api/p/${p.code}?depth=2`)
+        .then(res => res.json())
+        .then(data => {
+          setDistricts(data.districts);
+          const d = data.districts.find(dist => dist.name === addr.district);
+          if (d) {
+            setSelectedDistrict(d.code);
+            return fetch(`https://provinces.open-api.vn/api/d/${d.code}?depth=2`);
+          }
+        })
+        .then(res => res?.json())
+        .then(data => {
+          if (data) {
+            setWards(data.wards);
+            const w = data.wards.find(ward => ward.name === addr.ward);
+            if (w) setSelectedWard(w.code);
+          }
+        })
+        .catch(err => console.error("Sync error:", err));
+    }
   };
 
   useEffect(() => {
-    if (cartItems.length === 0 && !orderResponse) {
-      navigate('/');
+    fetch('https://provinces.open-api.vn/api/?depth=1')
+      .then(res => res.json())
+      .then(data => setProvinces(data))
+      .catch(err => console.error("Error fetching provinces:", err));
+  }, []);
+
+  const handleProvinceChange = (e) => {
+    const pCode = e.target.value;
+    setSelectedProvince(pCode);
+    setSelectedDistrict('');
+    setSelectedWard('');
+    setDistricts([]);
+    setWards([]);
+    if (pCode) {
+      fetch(`https://provinces.open-api.vn/api/p/${pCode}?depth=2`)
+        .then(res => res.json())
+        .then(data => setDistricts(data.districts))
+        .catch(err => console.error("Error fetching districts:", err));
     }
-  }, [cartItems, orderResponse, navigate]);
+  };
+
+  const handleDistrictChange = (e) => {
+    const dCode = e.target.value;
+    setSelectedDistrict(dCode);
+    setSelectedWard('');
+    setWards([]);
+    if (dCode) {
+      fetch(`https://provinces.open-api.vn/api/d/${dCode}?depth=2`)
+        .then(res => res.json())
+        .then(data => setWards(data.wards))
+        .catch(err => console.error("Error fetching wards:", err));
+    }
+  };
+
+  // Sync address and calculate fee
+  useEffect(() => {
+    const pName = provinces.find(p => p.code == selectedProvince)?.name || '';
+    const dName = districts.find(d => d.code == selectedDistrict)?.name || '';
+    const wName = wards.find(w => w.code == selectedWard)?.name || '';
+    
+    if (pName) {
+      const fullAddress = [detailAddress, wName, dName, pName].filter(Boolean).join(', ');
+      setShippingInfo(prev => ({ ...prev, address: fullAddress }));
+      
+      // Dynamic Fee Simulation (North/Central/South)
+      const addr = fullAddress.toLowerCase();
+      if (addr.includes("hà nội") || addr.includes("hải phòng") || addr.includes("bắc ninh")) setShippingFee(30000);
+      else if (addr.includes("hồ chí minh") || addr.includes("tphcm") || addr.includes("bình dương")) setShippingFee(35000);
+      else setShippingFee(45000);
+    }
+  }, [selectedProvince, selectedDistrict, selectedWard, detailAddress, provinces, districts, wards]);
+
+  const handleApplyVoucher = async () => {
+    if (!voucherCode.trim()) return;
+    try {
+      const res = await api.get('/vouchers');
+      const voucher = res.data.find(v => v.code === voucherCode.trim() && v.active);
+      
+      if (!voucher) {
+        alert("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
+        return;
+      }
+
+      const subtotal = Number(getTotalPrice());
+      const minAmount = Number(voucher.minOrderAmount);
+
+      if (subtotal < minAmount) {
+        alert(`Đơn hàng tối thiểu ${minAmount.toLocaleString()}đ để dùng mã này!`);
+        return;
+      }
+
+      let discount = subtotal * (Number(voucher.discountPercent) / 100);
+      if (voucher.maxDiscountAmount) {
+        discount = Math.min(discount, Number(voucher.maxDiscountAmount));
+      }
+
+      setAppliedVoucher({ ...voucher, discount });
+      alert("Áp dụng mã giảm giá thành công!");
+    } catch (err) {
+      alert("Lỗi khi kiểm tra mã giảm giá");
+    }
+  };
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
-    
-    if (!user) return alert("Vui lòng đăng nhập để tiếp tục!");
-    
-    if (!shippingInfo.fullName.trim() || !shippingInfo.phone.trim() || !shippingInfo.address.trim()) {
-      return alert("Vui lòng điền đầy đủ thông tin giao hàng!");
-    }
+    if (!user) return alert("Vui lòng đăng nhập!");
+    if (!shippingInfo.address) return alert("Vui lòng nhập địa chỉ giao hàng!");
 
     setLoading(true);
-    try {
-      // SỬA LỖI TẠI ĐÂY: Thêm sizeName và các thông tin giao nhận
-      const orderDto = {
-        clientId: user.id,
-        shippingName: shippingInfo.fullName,
-        shippingPhone: shippingInfo.phone,
-        shippingAddress: shippingInfo.address,
-        items: cartItems.map(item => ({ 
-          productId: item.id, 
-          quantity: item.quantity,
-          sizeName: item.selectedSize?.size // Backend yêu cầu String size ("M", "L"...)
-        }))
-      };
+    const orderDto = {
+      clientId: user.id,
+      shippingName: shippingInfo.fullName,
+      shippingPhone: shippingInfo.phone,
+      shippingAddress: shippingInfo.address,
+      voucherCode: voucherCode,
+      items: cartItems.map(item => ({ 
+        productId: item.id, 
+        quantity: item.quantity,
+        sizeName: item.selectedSize?.size,
+        color: item.selectedColor
+      }))
+    };
 
+    try {
       const res = await api.post('/orders', orderDto);
-      
-      if (res.status === 200 || res.status === 201) {
-        setOrderResponse(res.data);
-        clearCart(); 
+      const newOrder = res.data;
+
+      if (paymentMethod === 'VNPAY') {
+        const paymentRes = await api.post('/payment/create-payment', {
+          orderId: newOrder.id,
+          amount: newOrder.total
+        });
+        window.location.href = paymentRes.data.url;
+      } else {
+        setOrderResponse(newOrder);
+        clearCart();
       }
     } catch (error) {
-      console.error("Order Error:", error);
-      // Hiển thị thông báo lỗi chi tiết từ Server nếu có
-      const errorMsg = error.response?.data?.message || "Đặt hàng thất bại. Vui lòng kiểm tra lại tồn kho!";
-      alert(errorMsg);
+      alert(error.response?.data?.message || "Đặt hàng thất bại!");
     } finally {
       setLoading(false);
     }
   };
 
-  // --- GIAO DIỆN SAU KHI ĐẶT HÀNG THÀNH CÔNG ---
   if (orderResponse) {
     return (
-      <div className="container mt-5 text-center">
-        <div className="card shadow-lg p-5 mx-auto border-0" style={{maxWidth: '600px', borderRadius: '15px'}}>
-          <FaCheckCircle className="text-success display-1 mb-3" />
-          <h2 className="fw-bold text-dark">Đặt hàng hoàn tất!</h2>
-          <p className="text-muted fs-5">Mã đơn hàng: <span className="badge bg-dark">#DH{orderResponse.id}</span></p>
-          
-          <div className="my-4 p-4 rounded" style={{ backgroundColor: '#f8f9fa' }}>
-            {paymentMethod === 'ONLINE' ? (
-              <>
-                <div className="alert alert-info fw-bold">
-                  Quét mã QR để thanh toán: {orderResponse.total?.toLocaleString()} VNĐ
-                </div>
-                <img 
-                  src={`https://img.vietqr.io/image/${MY_BANK.ID}-${MY_BANK.ACCOUNT_NO}-compact.png?amount=${orderResponse.total}&addInfo=THANH TOAN DH${orderResponse.id}&accountName=${MY_BANK.ACCOUNT_NAME}`} 
-                  alt="QR Payment" 
-                  className="img-fluid mb-3 shadow-sm border border-white" 
-                  style={{maxWidth: '280px', borderRadius: '10px'}} 
-                />
-                <h5 className="text-primary fw-bold mb-0">Nội dung: DH{orderResponse.id}</h5>
-                <small className="text-muted">Hệ thống sẽ xác nhận sau khi nhận được tiền</small>
-              </>
-            ) : (
-              <div className="py-3">
-                <FaMoneyBillWave className="text-success display-4 mb-3" />
-                <h5>Bạn đã chọn: <b>Thanh toán khi nhận hàng (COD)</b></h5>
-                <p className="text-muted">Vui lòng chuẩn bị số tiền <b>{orderResponse.total?.toLocaleString()}đ</b> khi shipper giao tới.</p>
+      <div className="container py-5 text-center">
+        <div className="luxury-card p-5 mx-auto" style={{maxWidth: '600px'}}>
+          <FaCheckCircle className="text-success display-1 mb-4" />
+          <h2 className="fw-black text-dark mb-2">ĐẶT HÀNG THÀNH CÔNG!</h2>
+          <p className="text-muted mb-4">Cảm ơn bạn đã tin dùng Sporting Shop. Mã đơn hàng của bạn là <b>#ORD-{orderResponse.id}</b></p>
+          <div className="bg-light p-4 rounded-4 mb-4 text-start">
+              <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Tổng thanh toán:</span>
+                  <span className="fw-black text-danger h5 mb-0">{orderResponse.total?.toLocaleString()}đ</span>
               </div>
-            )}
+              <div className="d-flex justify-content-between">
+                  <span className="text-muted">Trạng thái:</span>
+                  <span className="badge bg-warning text-dark px-3">CHỜ XÁC NHẬN</span>
+              </div>
           </div>
-          
-          <button className="btn btn-primary btn-lg w-100 py-3 shadow-sm fw-bold" onClick={() => navigate('/')}>
-            TIẾP TỤC MUA SẮM
-          </button>
+          <button className="luxury-button w-100 py-3" onClick={() => navigate('/')}>TIẾP TỤC KHÁM PHÁ</button>
         </div>
       </div>
     );
   }
 
-  // --- GIAO DIỆN TRANG NHẬP THÔNG TIN ---
   return (
-    <div className="container mt-5 mb-5">
-      <div className="row">
-        <div className="col-md-7">
-          <button onClick={() => navigate('/cart')} className="btn btn-link text-dark p-0 mb-3 text-decoration-none">
-            <FaArrowLeft className="me-2" /> Quay lại giỏ hàng
-          </button>
-          
-          <div className="card p-4 shadow-sm border-0 mb-4" style={{borderRadius: '12px'}}>
-            <h4 className="fw-bold mb-4">1. Thông tin giao hàng</h4>
-            <div className="mb-3">
-              <label className="form-label fw-semibold"><FaUser className="me-2 text-primary"/>Họ và tên</label>
-              <input type="text" className="form-control form-control-lg" value={shippingInfo.fullName} 
-                onChange={(e) => setShippingInfo({...shippingInfo, fullName: e.target.value})} />
-            </div>
-            <div className="mb-3">
-              <label className="form-label fw-semibold"><FaPhoneAlt className="me-2 text-primary"/>Số điện thoại</label>
-              <input type="text" className="form-control form-control-lg" placeholder="Ví dụ: 0912345xxx"
-                value={shippingInfo.phone}
-                onChange={(e) => setShippingInfo({...shippingInfo, phone: e.target.value})} />
-            </div>
-            <div className="mb-3">
-              <label className="form-label fw-semibold"><FaMapMarkerAlt className="me-2 text-primary"/>Địa chỉ nhận hàng</label>
-              <textarea className="form-control" rows="3" placeholder="Số nhà, tên đường, phường/xã, quận/huyện..."
-                value={shippingInfo.address}
-                onChange={(e) => setShippingInfo({...shippingInfo, address: e.target.value})}></textarea>
-            </div>
-          </div>
-
-          <div className="card p-4 shadow-sm border-0" style={{borderRadius: '12px'}}>
-            <h4 className="fw-bold mb-4">2. Phương thức thanh toán</h4>
-            
-            <div 
-              className={`p-3 mb-3 border rounded-3 d-flex align-items-center transition-all ${paymentMethod === 'COD' ? 'border-primary bg-primary bg-opacity-10' : ''}`} 
-              style={{cursor: 'pointer'}} 
-              onClick={() => setPaymentMethod('COD')}
-            >
-              <FaMoneyBillWave className={`me-3 fs-3 ${paymentMethod === 'COD' ? 'text-primary' : 'text-muted'}`} />
-              <div className="flex-grow-1">
-                <div className="fw-bold">Thanh toán khi nhận hàng (COD)</div>
-                <small className="text-muted">Nhận hàng rồi mới trả tiền</small>
-              </div>
-              <div className="rounded-circle border d-flex align-items-center justify-content-center" style={{width: '20px', height: '20px'}}>
-                  {paymentMethod === 'COD' && <div className="bg-primary rounded-circle" style={{width: '12px', height: '12px'}}></div>}
-              </div>
+    <div className="checkout-page bg-white min-vh-100 py-5" style={{fontFamily: '"Inter", sans-serif'}}>
+      <div className="container">
+        <div className="row g-5">
+          {/* Left: Shipping & Payment */}
+          <div className="col-lg-7">
+            <div className="d-flex align-items-center gap-3 mb-5">
+                <div className="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style={{width: '40px', height: '40px'}}>1</div>
+                <h3 className="fw-black text-uppercase m-0 tracking-widest">THÔNG TIN GIAO HÀNG</h3>
             </div>
 
-            <div 
-              className={`p-3 border rounded-3 d-flex align-items-center transition-all ${paymentMethod === 'ONLINE' ? 'border-primary bg-primary bg-opacity-10' : ''}`} 
-              style={{cursor: 'pointer'}} 
-              onClick={() => setPaymentMethod('ONLINE')}
-            >
-              <FaQrcode className={`me-3 fs-3 ${paymentMethod === 'ONLINE' ? 'text-primary' : 'text-muted'}`} />
-              <div className="flex-grow-1">
-                <div className="fw-bold">Chuyển khoản qua Mã QR (VietQR)</div>
-                <small className="text-muted">Tạo mã QR tự động chính xác số tiền</small>
-              </div>
-              <div className="rounded-circle border d-flex align-items-center justify-content-center" style={{width: '20px', height: '20px'}}>
-                  {paymentMethod === 'ONLINE' && <div className="bg-primary rounded-circle" style={{width: '12px', height: '12px'}}></div>}
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div className="col-md-5">
-          <div className="card p-4 shadow-sm border-0 sticky-top" style={{top: '20px', borderRadius: '12px'}}>
-            <h4 className="fw-bold mb-4">Đơn hàng của bạn</h4>
-            <div className="mb-3 overflow-auto" style={{maxHeight: '400px'}}>
-              {cartItems.map((item, index) => (
-                <div key={`${item.id}-${index}`} className="d-flex align-items-center mb-3">
-                  <img src={item.imgUrl} alt={item.name} style={{width: '50px', height: '50px', objectFit: 'cover', borderRadius: '5px'}} className="me-3" />
-                  <div className="flex-grow-1">
-                    <div className="fw-bold small">{item.name}</div>
-                    <small className="text-muted">SL: {item.quantity} | Size: {item.selectedSize?.size}</small>
-                  </div>
-                  <div className="fw-bold">{(item.price * item.quantity).toLocaleString()}đ</div>
+            {/* Saved Addresses Selector */}
+            {savedAddresses.length > 0 && (
+                <div className="mb-4 p-4 border rounded-4 bg-light d-flex align-items-center justify-content-between">
+                    <div className="d-flex align-items-center gap-3">
+                        <FaMapMarkerAlt className="text-primary fs-4" />
+                        <div>
+                            <div className="fw-bold">Sử dụng địa chỉ đã lưu</div>
+                            <small className="text-muted">Tiết kiệm thời gian nhập liệu</small>
+                        </div>
+                    </div>
+                    <select className="form-select w-auto border-0 shadow-sm rounded-3" onChange={(e) => {
+                        const addr = savedAddresses.find(a => a.id == e.target.value);
+                        if (addr) applySavedAddress(addr);
+                    }}>
+                        <option value="">Chọn địa chỉ...</option>
+                        {savedAddresses.map(addr => (
+                            <option key={addr.id} value={addr.id}>{addr.detail} ({addr.fullName})</option>
+                        ))}
+                    </select>
                 </div>
-              ))}
+            )}
+
+            <div className="row g-4 mb-5">
+              <div className="col-md-6">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Họ và tên người nhận</label>
+                <input type="text" className="luxury-input w-100" value={shippingInfo.fullName} 
+                    onChange={e => setShippingInfo({...shippingInfo, fullName: e.target.value})} />
+              </div>
+              <div className="col-md-6">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Số điện thoại</label>
+                <input type="text" className="luxury-input w-100" value={shippingInfo.phone} 
+                    onChange={e => setShippingInfo({...shippingInfo, phone: e.target.value})} />
+              </div>
+              
+              <div className="col-md-4">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Tỉnh / Thành phố</label>
+                <select className="luxury-input w-100" value={selectedProvince} onChange={handleProvinceChange}>
+                  <option value="">Chọn Tỉnh thành</option>
+                  {provinces.map(p => <option key={p.code} value={p.code}>{p.name}</option>)}
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Quận / Huyện</label>
+                <select className="luxury-input w-100" value={selectedDistrict} onChange={handleDistrictChange} disabled={!selectedProvince}>
+                  <option value="">Chọn Quận huyện</option>
+                  {districts.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
+                </select>
+              </div>
+              <div className="col-md-4">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Phường / Xã</label>
+                <select className="luxury-input w-100" value={selectedWard} onChange={e => setSelectedWard(e.target.value)} disabled={!selectedDistrict}>
+                  <option value="">Chọn Phường xã</option>
+                  {wards.map(w => <option key={w.code} value={w.code}>{w.name}</option>)}
+                </select>
+              </div>
+              
+              <div className="col-12">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Địa chỉ chi tiết</label>
+                <textarea className="luxury-input w-100" style={{height: '100px'}} placeholder="Số nhà, tên đường..." 
+                    value={detailAddress} onChange={e => setDetailAddress(e.target.value)}></textarea>
+              </div>
             </div>
-            <hr />
-            <div className="d-flex justify-content-between h4 fw-bold text-danger mt-2 mb-4">
-              <span>Tổng thanh toán:</span>
-              <span>{getTotalPrice().toLocaleString()} VNĐ</span>
+
+            <div className="d-flex align-items-center gap-3 mb-5">
+                <div className="bg-dark text-white rounded-circle d-flex align-items-center justify-content-center" style={{width: '40px', height: '40px'}}>2</div>
+                <h3 className="fw-black text-uppercase m-0 tracking-widest">PHƯƠNG THỨC THANH TOÁN</h3>
             </div>
-            <button 
-              className="btn btn-danger btn-lg w-100 fw-bold py-3 shadow" 
-              onClick={handlePlaceOrder} 
-              disabled={loading}
-            >
-              {loading && <span className="spinner-border spinner-border-sm me-2"></span>}
-              {loading ? "ĐANG XỬ LÝ..." : "XÁC NHẬN ĐẶT HÀNG"}
-            </button>
+
+            <div className="row g-3 mb-5">
+                {[
+                    { id: 'COD', name: 'THANH TOÁN KHI NHẬN HÀNG (COD)', sub: 'Trả tiền mặt cho shipper', icon: <FaMoneyBillWave /> },
+                    { id: 'VNPAY', name: 'THANH TOÁN QUA VNPAY', sub: 'Thẻ ATM / QR Code / Ví điện tử', icon: <img src="https://vnpay.vn/wp-content/uploads/2020/07/vnpay-logo.png" style={{height: '20px'}} /> }
+                ].map(method => (
+                    <div key={method.id} className="col-12">
+                        <div className={`p-4 border-2 rounded-4 d-flex align-items-center gap-4 transition-all cursor-pointer ${paymentMethod === method.id ? 'border-dark bg-light' : 'border-light'}`}
+                             onClick={() => setPaymentMethod(method.id)}>
+                            <div className="fs-3">{method.icon}</div>
+                            <div className="flex-grow-1">
+                                <div className="fw-black small">{method.name}</div>
+                                <small className="text-muted">{method.sub}</small>
+                            </div>
+                            <div className={`rounded-circle border-2 ${paymentMethod === method.id ? 'bg-dark border-dark' : 'border-gray'}`} style={{width: '20px', height: '20px', padding: '2px'}}>
+                                <div className="bg-white rounded-circle w-100 h-100"></div>
+                            </div>
+                        </div>
+                    </div>
+                ))}
+            </div>
+          </div>
+
+          {/* Right: Order Summary (Sticky) */}
+          <div className="col-lg-5">
+            <div className="sticky-top" style={{top: '100px', zIndex: 10}}>
+                <div className="luxury-card p-5 border-0 shadow-2xl">
+                    <h4 className="fw-black text-uppercase tracking-widest mb-4">TÓM TẮT ĐƠN HÀNG</h4>
+                    
+                    <div className="mb-4 overflow-auto" style={{maxHeight: '300px'}}>
+                        {cartItems.map((item, index) => (
+                            <div key={index} className="d-flex align-items-center gap-3 mb-3 pb-3 border-bottom border-light">
+                                <img src={item.image} alt="" className="rounded-3 shadow-sm" style={{width: '60px', height: '70px', objectFit: 'cover'}} />
+                                <div className="flex-grow-1">
+                                    <div className="fw-bold text-truncate" style={{maxWidth: '180px'}}>{item.name}</div>
+                                    <small className="text-muted d-block">Size: {item.selectedSize?.size} | Màu: {item.selectedColor}</small>
+                                    <div className="fw-black small">{item.price?.toLocaleString()}đ x {item.quantity}</div>
+                                </div>
+                                <div className="fw-black text-dark">{(item.price * item.quantity).toLocaleString()}đ</div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Voucher Section */}
+                    <div className="mb-4">
+                        <label className="fw-bold small text-muted text-uppercase mb-2">MÃ GIẢM GIÁ (VOUCHER)</label>
+                        <div className="d-flex gap-2">
+                            <input type="text" className="luxury-input flex-grow-1" placeholder="NHẬP MÃ TẠI ĐÂY" 
+                                value={voucherCode} onChange={e => setVoucherCode(e.target.value.toUpperCase())} />
+                            <button className="luxury-button" style={{padding: '0 1.5rem'}} onClick={handleApplyVoucher}>ÁP DỤNG</button>
+                        </div>
+                    </div>
+
+                    <div className="space-y-3 mb-4">
+                        <div className="d-flex justify-content-between text-muted">
+                            <span>Tạm tính:</span>
+                            <span className="fw-bold">{getTotalPrice().toLocaleString()}đ</span>
+                        </div>
+                        <div className="d-flex justify-content-between text-muted">
+                            <span>Phí vận chuyển:</span>
+                            <span className="fw-bold text-success">+{shippingFee?.toLocaleString()}đ</span>
+                        </div>
+                        {appliedVoucher && (
+                            <div className="d-flex justify-content-between text-danger">
+                                <span>Giảm giá (Voucher):</span>
+                                <span className="fw-bold">-{appliedVoucher.discount?.toLocaleString()}đ</span>
+                            </div>
+                        )}
+                        <hr className="my-3 border-light" />
+                        <div className="d-flex justify-content-between h3 mb-0">
+                            <span className="fw-black tracking-tighter">TỔNG CỘNG</span>
+                            <span className="fw-black text-dark">{(getTotalPrice() + shippingFee - (appliedVoucher?.discount || 0)).toLocaleString()}đ</span>
+                        </div>
+                    </div>
+
+                    <button className="luxury-button w-100 py-4 fs-5 gap-3" onClick={handlePlaceOrder} disabled={loading}>
+                        {loading ? <div className="spinner-border spinner-border-sm" /> : <><FaCheckCircle /> XÁC NHẬN THANH TOÁN</>}
+                    </button>
+                    
+                    <p className="small text-center text-muted mt-4 mb-0">Bằng việc đặt hàng, bạn đồng ý với <a href="#" className="text-dark fw-bold">Điều khoản & Chính sách</a> của Sporting Shop.</p>
+                </div>
+            </div>
           </div>
         </div>
       </div>

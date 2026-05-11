@@ -65,7 +65,7 @@
   border-radius: 12px;
   box-shadow: var(--admin-card-shadow);
   border: none;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .table-modern thead {

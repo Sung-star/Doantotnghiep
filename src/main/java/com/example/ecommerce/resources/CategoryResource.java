@@ -9,9 +9,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 import com.example.ecommerce.entities.Category;
 import com.example.ecommerce.services.CategoryService;
 
-@CrossOrigin(origins = "http://localhost:5173")
+@CrossOrigin(origins = "*")
 @RestController
-@RequestMapping(value = "/categories")
+@RequestMapping(value = "/api/categories")
 public class CategoryResource {
     
     @Autowired
@@ -20,6 +20,11 @@ public class CategoryResource {
     @GetMapping
     public ResponseEntity<List<Category>> findAll(){
         return ResponseEntity.ok().body(service.findAll());
+    }
+
+    @GetMapping(value = "/tree")
+    public ResponseEntity<List<Category>> findTree() {
+        return ResponseEntity.ok().body(service.findAllRoots());
     }
     
     @GetMapping(value = "/{id}")

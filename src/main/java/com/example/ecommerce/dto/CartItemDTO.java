@@ -4,14 +4,16 @@ public class CartItemDTO {
     private Long productId;
     private Integer quantity;
     private String sizeName; // <--- ĐÃ SỬA: Dùng String để nhận tên size (VD: "M", "L")
+    private String color; // New field for variant selection
 
     public CartItemDTO() {
     }
 
-    public CartItemDTO(Long productId, Integer quantity, String sizeName) {
+    public CartItemDTO(Long productId, Integer quantity, String sizeName, String color) {
         this.productId = productId;
         this.quantity = quantity;
         this.sizeName = sizeName;
+        this.color = color;
     }
 
     public Long getProductId() {
@@ -37,5 +39,13 @@ public class CartItemDTO {
 
     public void setSizeName(String sizeName) {
         this.sizeName = sizeName;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
     }
 }

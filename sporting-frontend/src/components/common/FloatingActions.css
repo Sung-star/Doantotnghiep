@@ -1,0 +1,102 @@
+.floating-container {
+    position: fixed;
+    bottom: 30px;
+    left: 30px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    z-index: 9999;
+}
+
+.floating-btn {
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    text-decoration: none;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+}
+
+.floating-btn:hover {
+    transform: scale(1.1) translateY(-5px);
+    color: white;
+}
+
+.hotline {
+    background: #e74c3c;
+    width: auto;
+    padding: 0 20px;
+    border-radius: 30px;
+}
+
+.btn-label {
+    margin-left: 10px;
+    font-weight: bold;
+    font-size: 14px;
+    white-space: nowrap;
+}
+
+.zalo {
+    background: #0068ff;
+}
+
+.messenger {
+    background: #0084ff;
+}
+
+/* Hiệu ứng rung cho nút Hotline */
+.hotline {
+    animation: shake 2s infinite;
+}
+
+@keyframes shake {
+    0% { transform: rotate(0); }
+    10% { transform: rotate(-10deg); }
+    20% { transform: rotate(10deg); }
+    30% { transform: rotate(-10deg); }
+    40% { transform: rotate(10deg); }
+    50% { transform: rotate(0); }
+    100% { transform: rotate(0); }
+}
+
+/* Sóng lan tỏa */
+.pulse-wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 55px;
+    height: 55px;
+    border-radius: 50%;
+    background: rgba(231, 76, 60, 0.4);
+    z-index: -1;
+    animation: pulse 2s infinite;
+}
+
+@keyframes pulse {
+    0% { transform: scale(1); opacity: 1; }
+    100% { transform: scale(2.5); opacity: 0; }
+}
+
+@media (max-width: 768px) {
+    .floating-container {
+        bottom: 20px;
+        left: 20px;
+        gap: 10px;
+    }
+    .floating-btn {
+        width: 45px;
+        height: 45px;
+    }
+    .btn-label {
+        display: none;
+    }
+    .hotline {
+        width: 45px;
+        padding: 0;
+    }
+}

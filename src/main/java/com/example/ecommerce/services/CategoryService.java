@@ -20,6 +20,10 @@ public class CategoryService {
         return repository.findAll();
     }
 
+    public List<Category> findAllRoots() {
+        return repository.findByParentIsNull();
+    }
+
     public Category findById(Long id) {
         Optional<Category> category = repository.findById(id);
         return category.orElseThrow(() -> new ResourceNotFoundException(id));
@@ -60,5 +64,19 @@ public class CategoryService {
         } else {
             entity.setParent(null);
         }
+    }
+
+    public List<Long> getAllChildIds(List<Long> parentIds) {
+        List<Long> allIds = new java.util.ArrayList<>(parentIds);
+        for (Long id : parentIds) {
+            List<Category> children = repository.findAll().stream()
+                    .filter(c -> c.getParent() != null && c.getParent().getId().equals(id))
+                    .toList();
+            if (!children.isEmpty()) {
+                List<Long> childIds = children.stream().map(Category::getId).toList();
+                allIds.addAll(getAllChildIds(childIds));
+            }
+        }
+        return allIds.stream().distinct().toList();
     }
 }

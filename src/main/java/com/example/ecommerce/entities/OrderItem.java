@@ -3,12 +3,14 @@ package com.example.ecommerce.entities;
 import java.io.Serializable;
 import java.util.Objects;
 
-import com.example.ecommerce.entities.pk.OrderItemPK;
-import com.fasterxml.jackson.annotation.JsonIgnore;
-
-import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Entity;
 import jakarta.persistence.Table;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 @Entity
 @Table(name = "order_items")
@@ -16,13 +18,22 @@ public class OrderItem implements Serializable {
     
     private static final long serialVersionUID = 1L;
     
-    @EmbeddedId
-    private OrderItemPK id = new OrderItemPK();
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    private Long id;
+
+    @ManyToOne
+    @JoinColumn(name = "order_id")
+    @JsonIgnore
+    private Order order;
+
+    @ManyToOne
+    @JoinColumn(name = "product_id")
+    private Product product;
     
     private Integer quantity;
     private Double price;
     
-    // --- BỔ SUNG TRƯỜNG SIZE (Để sửa lỗi OrderService) ---
     private String size; 
     
     public OrderItem() {
@@ -30,27 +41,34 @@ public class OrderItem implements Serializable {
 
     public OrderItem(Order order, Product product, Integer quantity, Double price) {
         super();
-        id.setOrder(order);
-        id.setProduct(product);
+        this.order = order;
+        this.product = product;
         this.quantity = quantity;
         this.price = price;
     }
     
-    @JsonIgnore
+    public Long getId() {
+        return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
+    }
+
     public Order getOrder() {
-        return id.getOrder();
+        return order;
     }
     
     public void setOrder(Order order){
-        id.setOrder(order);
+        this.order = order;
     }
     
     public Product getProduct() {
-        return id.getProduct();
+        return product;
     }
     
     public void setProduct(Product product){
-        id.setProduct(product);
+        this.product = product;
     }
 
     public Integer getQuantity() {

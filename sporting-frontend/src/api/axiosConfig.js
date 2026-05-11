@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   // Thêm /api nếu backend của bạn có prefix này
-  baseURL: 'http://localhost:8080', 
+  baseURL: 'http://127.0.0.1:8081/api', 
   headers: {
     'Content-Type': 'application/json',
   }
@@ -26,13 +26,7 @@ api.interceptors.response.use(
   (error) => {
     if (error.response?.status === 401) {
       localStorage.clear();
-      
-      // Kiểm tra nếu đang ở trang admin thì về admin/login, ngược lại về /login
-      if (window.location.pathname.startsWith('/admin')) {
-        window.location.href = '/admin/login';
-      } else {
-        window.location.href = '/login';
-      }
+      window.location.href = '/login';
     }
     return Promise.reject(error);
   }

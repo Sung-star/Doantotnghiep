@@ -22,12 +22,22 @@ const Login = () => {
 
                 localStorage.setItem('user', JSON.stringify(user));
                 if (token) localStorage.setItem('token', token);
-                localStorage.removeItem('isAdminSession');
 
                 if (typeof login === 'function') login(user);
 
-                alert("Chào mừng bạn trở lại!");
-                navigate('/');
+                // Logic kiểm tra Admin linh hoạt (Chấp nhận cả đối tượng và chuỗi)
+                const isAdmin = user.roles && user.roles.some(role => {
+                    const auth = typeof role === 'string' ? role : role.authority;
+                    return auth === 'ROLE_ADMIN' || auth === 'ADMIN';
+                });
+                
+                if (isAdmin) {
+                    alert("Chào mừng Quản trị viên!");
+                    navigate('/admin');
+                } else {
+                    alert("Chào mừng bạn trở lại!");
+                    navigate('/');
+                }
             }
         } catch (error) {
     console.error("Chi tiết lỗi đăng nhập:", error); // Sử dụng biến error ở đây

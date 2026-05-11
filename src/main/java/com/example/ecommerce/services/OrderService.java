@@ -14,12 +14,18 @@ import com.example.ecommerce.entities.Order;
 import com.example.ecommerce.entities.OrderItem;
 import com.example.ecommerce.entities.Payment;
 import com.example.ecommerce.entities.ProductSize;
+import com.example.ecommerce.entities.ProductVariant;
 import com.example.ecommerce.entities.User;
+import com.example.ecommerce.entities.Voucher;
 import com.example.ecommerce.entities.enums.OrderStatus;
 import com.example.ecommerce.repositories.OrderItemRepository;
 import com.example.ecommerce.repositories.OrderRepository;
 import com.example.ecommerce.repositories.ProductSizeRepository;
+import com.example.ecommerce.repositories.ProductVariantRepository;
 import com.example.ecommerce.repositories.UserRepository;
+import com.example.ecommerce.repositories.VoucherRepository;
+import com.example.ecommerce.services.exceptions.BadRequestException;
+
 
 @Service
 public class OrderService {
@@ -35,6 +41,15 @@ public class OrderService {
 
     @Autowired
     private ProductSizeRepository productSizeRepository;
+
+    @Autowired
+    private ProductVariantRepository productVariantRepository;
+
+    @Autowired
+    private VoucherRepository voucherRepository;
+
+    @Autowired
+    private EmailService emailService;
 
     public List<Order> findAll() {
         return repository.findAll();
@@ -65,7 +80,12 @@ public class OrderService {
             Payment pay = new Payment(null, Instant.now(), order);
             order.setPayment(pay);
         }
-        return repository.save(order);
+        order = repository.save(order);
+        
+        // Trigger status update email
+        emailService.sendStatusUpdate(order);
+        
+        return order;
     }
 
     // --- ĐẶT HÀNG MỚI (LOGIC MỚI: DÙNG TÊN SIZE DẠNG STRING) ---
@@ -76,49 +96,117 @@ public class OrderService {
                 .orElseThrow(() -> new RuntimeException("Người dùng không tồn tại!"));
 
         // 2. Khởi tạo đơn hàng mới
-        Order order = new Order(null, Instant.now(), OrderStatus.WAITING_PAYMENT, client);
+        Order order = new Order(null, Instant.now(), OrderStatus.PENDING, client);
         
         // Lưu thông tin giao hàng
         order.setShippingName(dto.getShippingName());
         order.setShippingPhone(dto.getShippingPhone());
         order.setShippingAddress(dto.getShippingAddress());
 
+        // Tính phí vận chuyển (đơn giản: fixed 30k cho HN, 50k cho tỉnh)
+        double shippingFee = calculateShippingFee(dto.getShippingAddress());
+        order.setShippingFee(shippingFee);
+
+        // Áp dụng voucher nếu có
+        if (dto.getVoucherCode() != null && !dto.getVoucherCode().trim().isEmpty()) {
+            Voucher voucher = voucherRepository.findActiveByCode(dto.getVoucherCode().trim())
+                    .orElseThrow(() -> new BadRequestException("Mã giảm giá không hợp lệ hoặc đã hết hạn!"));
+            order.setVoucherCode(dto.getVoucherCode());
+            // Discount sẽ tính sau khi có tổng tiền, nhưng tạm set 0
+            order.setDiscountAmount(0.0);
+        }
+
         // Lưu Order trước để có ID
         order = repository.save(order);
 
         // 3. Xử lý từng sản phẩm & TRỪ KHO
         if (dto.getItems() == null || dto.getItems().isEmpty()) {
-            throw new RuntimeException("Giỏ hàng đang trống!");
+            throw new BadRequestException("Giỏ hàng đang trống!");
         }
 
         for (CartItemDTO itemDto : dto.getItems()) {
-            // A. TÌM ĐÚNG SẢN PHẨM + TÊN SIZE (Dùng hàm mới trong Repository)
-            // itemDto.getSizeName() trả về String (VD: "M", "L")
-            ProductSize productSize = productSizeRepository.findByProductAndSize(itemDto.getProductId(), itemDto.getSizeName())
-                    .orElseThrow(() -> new RuntimeException("Sản phẩm (ID: " + itemDto.getProductId() + ") với Size (" + itemDto.getSizeName() + ") không tồn tại hoặc đã hết hàng!"));
+            // A. TÌM ĐÚNG VARIANT (màu) trước
+            ProductVariant variant = productVariantRepository.findByProductAndColor(itemDto.getProductId(), itemDto.getColor())
+                    .orElseThrow(() -> new BadRequestException("Sản phẩm với màu " + itemDto.getColor() + " không tồn tại!"));
 
-            // B. KIỂM TRA TỒN KHO
+            // B. TÌM ĐÚNG SIZE trong variant đó
+            ProductSize productSize = productSizeRepository.findByVariantAndSize(variant.getId(), itemDto.getSizeName())
+                    .orElseThrow(() -> new BadRequestException("Sản phẩm (màu: " + itemDto.getColor() + ") với Size (" + itemDto.getSizeName() + ") không tồn tại hoặc đã hết hàng!"));
+
+            // C. KIỂM TRA TỒN KHO
             if (productSize.getQuantity() < itemDto.getQuantity()) {
-                throw new RuntimeException("Sản phẩm " + productSize.getProduct().getName() 
+                throw new BadRequestException("Sản phẩm " + variant.getProduct().getName() 
+                        + " - Màu " + variant.getColor() 
                         + " - Size " + productSize.getSize() 
                         + " không đủ hàng! (Còn lại: " + productSize.getQuantity() + ")");
             }
 
-            // C. TRỪ KHO VÀ LƯU LẠI
+            // D. TRỪ KHO VÀ LƯU LẠI
             productSize.setQuantity(productSize.getQuantity() - itemDto.getQuantity());
             productSizeRepository.save(productSize); // Cập nhật số lượng mới vào DB
 
-            // D. TẠO ORDER ITEM
-            OrderItem item = new OrderItem(order, productSize.getProduct(), itemDto.getQuantity(), productSize.getProduct().getPrice());
+            // E. TẠO ORDER ITEM
+            double itemPrice = variant.getProduct().getPrice();
+            OrderItem item = new OrderItem(order, variant.getProduct(), itemDto.getQuantity(), itemPrice);
             
             // Lưu tên Size (String) vào chi tiết đơn hàng
             item.setSize(productSize.getSize()); 
 
+            // QUAN TRỌNG: Thêm vào collection trong bộ nhớ để calculateDiscount thấy được items
+            order.getItems().add(item);
+
             orderItemRepository.save(item);
-            order.getItems().add(item); 
         }
 
-        // 4. Lưu lần cuối
-        return repository.save(order);
+        // Tính lại discount sau khi có items
+        if (order.getVoucherCode() != null) {
+            Voucher voucher = voucherRepository.findActiveByCode(order.getVoucherCode())
+                    .orElseThrow(() -> new RuntimeException("Voucher không còn hợp lệ!"));
+            double discount = calculateDiscount(order, voucher);
+            order.setDiscountAmount(discount);
+            repository.save(order); // Update discount
+        }
+
+        Order finalOrder = repository.save(order);
+        
+        // Trigger order confirmation email
+        emailService.sendOrderConfirmation(finalOrder);
+
+        return finalOrder;
+    }
+
+    private double calculateShippingFee(String address) {
+        if (address == null) return 40000.0;
+        String addr = address.toLowerCase();
+        
+        // Simulating distance-based fee (Adidas Level)
+        // North (Hà Nội & surrounding)
+        if (addr.contains("hà nội") || addr.contains("hải phòng") || addr.contains("bắc ninh") || addr.contains("hưng yên")) {
+            return 30000.0;
+        } 
+        // South (TP.HCM & surrounding)
+        else if (addr.contains("hồ chí minh") || addr.contains("tphcm") || addr.contains("bình dương") || addr.contains("đồng nai")) {
+            return 35000.0;
+        }
+        // Central or Remote
+        else {
+            return 45000.0;
+        }
+    }
+
+    private double calculateDiscount(Order order, Voucher voucher) {
+        double subtotal = order.getItems().stream()
+                .mapToDouble(item -> item.getSubTotal() != null ? item.getSubTotal() : 0.0)
+                .sum();
+
+        if (subtotal < voucher.getMinOrderAmount()) {
+            throw new BadRequestException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher!");
+        }
+
+        double discount = subtotal * (voucher.getDiscountPercent() / 100.0);
+        if (voucher.getMaxDiscountAmount() != null) {
+            discount = Math.min(discount, voucher.getMaxDiscountAmount());
+        }
+        return discount;
     }
 }

@@ -66,5 +66,8 @@ public class UserService {
         if (data.getEmail() != null && !data.getEmail().isEmpty()) {
             entity.setEmail(data.getEmail());
         }
+        if (data.getImgUrl() != null) {
+            entity.setImgUrl(data.getImgUrl());
+        }
     }
 }

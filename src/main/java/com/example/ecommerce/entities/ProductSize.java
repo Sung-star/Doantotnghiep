@@ -1,46 +1,56 @@
 package com.example.ecommerce.entities;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnore;
-import java.io.Serializable;
+
+import jakarta.persistence.Entity;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.Table;
 
 @Entity
-@Table(name = "product_sizes")
-public class ProductSize implements Serializable {
-    private static final long serialVersionUID = 1L;
+@Table(name = "tb_product_size")
+public class ProductSize {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    
+    private String size;
     private Integer quantity;
 
-    @Column(name = "size_name") 
-    private String size; // <--- ĐÃ SỬA: Lưu tên size dạng chữ (String) thay vì đối tượng Size
-
-    @ManyToOne
-    @JoinColumn(name = "product_id")
+    // SỬA ĐỔI: Trỏ về ProductVariant thay vì Product
     @JsonIgnore
-    private Product product;
+    @ManyToOne
+    @JoinColumn(name = "variant_id") 
+    private ProductVariant productVariant;
 
-    public ProductSize() {
-    }
+    public ProductSize() {}
 
-    public ProductSize(Long id, Integer quantity, String size, Product product) {
+    public ProductSize(Long id, String size, Integer quantity, ProductVariant productVariant) {
         this.id = id;
-        this.quantity = quantity;
         this.size = size;
-        this.product = product;
+        this.quantity = quantity;
+        this.productVariant = productVariant;
     }
 
-    // --- GETTERS & SETTERS ---
-
+    // Getters and Setters
     public Long getId() {
         return id;
     }
 
     public void setId(Long id) {
         this.id = id;
+    }
+
+    public String getSize() {
+        return size;
+    }
+
+    public void setSize(String size) {
+        this.size = size;
     }
 
     public Integer getQuantity() {
@@ -51,22 +61,13 @@ public class ProductSize implements Serializable {
         this.quantity = quantity;
     }
 
-    public String getSize() { // Trả về String
-        return size;
+    public ProductVariant getProductVariant() {
+        return productVariant;
     }
 
-    public void setSize(String size) {
-        this.size = size;
+    public void setProductVariant(ProductVariant productVariant) {
+        this.productVariant = productVariant;
     }
 
-    public Product getProduct() {
-        return product;
-    }
-
-    public void setProduct(Product product) {
-        this.product = product;
-    }
-    @Override
-public String toString() {
-    return size + ": " + quantity;
-}}
+    // Hãy tạo các Getter và Setter cho các trường
+}

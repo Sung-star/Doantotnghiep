@@ -11,9 +11,11 @@ import com.example.ecommerce.entities.Order;
 import com.example.ecommerce.entities.enums.OrderStatus;
 import com.example.ecommerce.services.OrderService;
 
+import jakarta.validation.Valid;
+
 @CrossOrigin(origins = "*") // Tránh lỗi CORS từ React
 @RestController
-@RequestMapping(value = "/orders")
+@RequestMapping(value = "/api/orders")
 public class OrderResource {
 	
     @Autowired
@@ -33,7 +35,7 @@ public class OrderResource {
 
     // ĐẶT HÀNG MỚI (Nhận dữ liệu từ trang thanh toán)
     @PostMapping
-    public ResponseEntity<Order> insert(@RequestBody OrderDTO dto) {
+    public ResponseEntity<Order> insert(@Valid @RequestBody OrderDTO dto) {
         Order obj = service.placeOrder(dto); 
         return ResponseEntity.ok().body(obj);
     }

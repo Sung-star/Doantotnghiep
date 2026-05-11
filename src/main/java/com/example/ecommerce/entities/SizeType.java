@@ -1,0 +1,6 @@
+package com.example.ecommerce.entities;
+
+public enum SizeType {
+    ALPHA,   // XS, S, M, L, XL...
+    NUMERIC  // 38, 39, 40... hoặc 28, 30, 32...
+}
