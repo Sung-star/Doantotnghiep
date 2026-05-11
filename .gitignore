@@ -46,7 +46,7 @@ build/
 ### VS Code ###
 .vscode/
 # SportingShop ignores
-/uploads/
+# /uploads/
 *.sql
 npm
 ErrorResponse.java
