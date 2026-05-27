@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ShoppingCart, User, ShoppingBag, Search, Menu, X,
-  LogOut, Package, LogIn, UserPlus, ShieldCheck, ChevronDown, Heart
+  LogOut, Package, LogIn, UserPlus, ShieldCheck, ChevronDown, Heart, Sun, Moon
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import MiniCartSidebar from './MiniCartSidebar';
+import NotificationBell from '../common/NotificationBell';
 import api from '../../api/axiosConfig';
 import './Navbar.css';
 
@@ -15,8 +17,11 @@ const Navbar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { user, logout } = useAuth();
   const { cartItems, openMiniCart } = useCart();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   React.useEffect(() => {
     const fetchCategories = async () => {
@@ -32,11 +37,32 @@ const Navbar = () => {
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  React.useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm.trim().length > 1) {
+        setIsSearching(true);
+        try {
+          const res = await api.get(`/products?size=5&q=${encodeURIComponent(searchTerm)}`);
+          const data = res.data.content || res.data;
+          setSearchResults(Array.isArray(data) ? data.slice(0, 5) : []);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/products?q=${encodeURIComponent(searchTerm)}`);
       setSearchTerm('');
+      setSearchResults([]);
       setIsMenuOpen(false);
     }
   };
@@ -50,6 +76,22 @@ const Navbar = () => {
     if (!imgUrl) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff&bold=true`;
     if (imgUrl.startsWith('http') || imgUrl.startsWith('data:')) return imgUrl;
     return `http://localhost:8081${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+  };
+
+  const getProductImage = (p) => {
+    const getUrl = (url) => {
+      if (!url) return 'https://via.placeholder.com/40?text=Shop';
+      if (url.startsWith('http') || url.startsWith('data:')) return url;
+      return `http://localhost:8081${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+    const variants = p?.variants;
+    let variant = null;
+    if (Array.isArray(variants) && variants.length > 0) variant = variants[0];
+    else if (variants && typeof variants === 'object' && Object.values(variants).length > 0) variant = Object.values(variants)[0];
+    
+    const sourceString = variant?.imgUrl || p?.imgUrl || '';
+    const urls = sourceString.split('|').map(u => u.trim()).filter(u => u !== '');
+    return urls.length > 0 ? getUrl(urls[0]) : 'https://via.placeholder.com/40?text=Shop';
   };
 
   const handleCategoryClick = (categoryName) => {
@@ -136,7 +178,7 @@ const Navbar = () => {
 
           {/* 3. SEARCH & ACTIONS */}
           <div className="d-flex align-items-center gap-2 gap-md-3">
-            <form onSubmit={handleSearch} className="d-none d-md-flex me-2">
+            <form onSubmit={handleSearch} className="d-none d-md-flex me-2 position-relative">
               <div className="input-group search-group-luxury">
                 <span className="input-group-text border-0 bg-transparent ps-3"><Search size={18} className="text-muted" /></span>
                 <input
@@ -147,11 +189,46 @@ const Navbar = () => {
                   onChange={(e) => setSearchTerm(e.target.value)}
                 />
               </div>
+              
+              {/* SMART SEARCH DROPDOWN */}
+              {(searchResults.length > 0 || isSearching) && (
+                <div className="position-absolute w-100 bg-white luxury-shadow rounded-4 p-3 z-3" style={{ top: 'calc(100% + 10px)', border: '1px solid var(--border-color)', background: 'var(--bg-card)' }}>
+                  {isSearching ? (
+                    <div className="text-center py-3 text-muted small">Đang tìm kiếm...</div>
+                  ) : (
+                    <>
+                      <h6 className="small fw-bold text-muted mb-3 text-uppercase tracking-widest">Gợi ý sản phẩm</h6>
+                      <ul className="list-unstyled mb-0 d-flex flex-column gap-2">
+                        {searchResults.map(p => (
+                          <li key={p.id}>
+                            <Link to={`/product/${p.id}`} className="d-flex align-items-center gap-3 text-decoration-none text-dark p-2 rounded-3 hover-bg-light" onClick={() => {setSearchTerm(''); setSearchResults([]); setIsMenuOpen(false);}}>
+                               <img src={getProductImage(p)} alt={p.name} className="rounded-3 object-fit-cover" width="40" height="40" />
+                               <div className="overflow-hidden">
+                                  <div className="fw-bold small text-truncate" style={{ color: 'var(--text-main)' }}>{p.name}</div>
+                                  <div className="text-primary small fw-black">{p.price ? p.price.toLocaleString() : 0}đ</div>
+                               </div>
+                            </Link>
+                          </li>
+                        ))}
+                      </ul>
+                      <button type="submit" className="btn btn-link text-center w-100 text-decoration-none small mt-2 border-top pt-2">
+                        Xem tất cả kết quả
+                      </button>
+                    </>
+                  )}
+                </div>
+              )}
             </form>
+
+            <button type="button" className="luxury-icon-btn" onClick={toggleTheme}>
+              {theme === 'light' ? <Moon size={20} /> : <Sun size={20} />}
+            </button>
 
             <Link to="/wishlist" className="luxury-icon-btn">
               <Heart size={20} />
             </Link>
+
+            <NotificationBell />
 
             <button type="button" className="luxury-icon-btn position-relative" onClick={openMiniCart}>
               <ShoppingCart size={20} />

@@ -1,5 +1,5 @@
 import { useEffect, lazy } from 'react';
-import { BrowserRouter as Router, Routes, Route, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, useLocation, Navigate } from 'react-router-dom';
 import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
@@ -26,6 +26,13 @@ const Profile = lazy(() => import('./pages/user/Profile'));
 const Orders = lazy(() => import('./pages/user/Orders'));
 const Wishlist = lazy(() => import('./pages/user/Wishlist'));
 const PaymentResult = lazy(() => import('./pages/user/PaymentResult'));
+
+// Support pages
+const ReturnPolicy = lazy(() => import('./pages/support/ReturnPolicy'));
+const Shipping = lazy(() => import('./pages/support/Shipping'));
+const Payment = lazy(() => import('./pages/support/Payment'));
+const Security = lazy(() => import('./pages/support/Security'));
+const FAQ = lazy(() => import('./pages/support/FAQ'));
 
 // Auth pages
 const Login = lazy(() => import('./pages/auth/Login'));
@@ -82,6 +89,16 @@ function App() {
                 <Route path="/cart" element={<SuspenseWrapper><Cart /></SuspenseWrapper>} />
                 <Route path="/checkout" element={<SuspenseWrapper><Checkout /></SuspenseWrapper>} />
                 <Route path="/wishlist" element={<SuspenseWrapper><Wishlist /></SuspenseWrapper>} />
+                <Route path="/men" element={<Navigate to="/products?category=Nam" replace />} />
+                <Route path="/women" element={<Navigate to="/products?category=Nữ" replace />} />
+                <Route path="/collections" element={<Navigate to="/products" replace />} />
+
+                {/* Support */}
+                <Route path="/support/return-policy" element={<SuspenseWrapper><ReturnPolicy /></SuspenseWrapper>} />
+                <Route path="/support/shipping" element={<SuspenseWrapper><Shipping /></SuspenseWrapper>} />
+                <Route path="/support/payment" element={<SuspenseWrapper><Payment /></SuspenseWrapper>} />
+                <Route path="/support/security" element={<SuspenseWrapper><Security /></SuspenseWrapper>} />
+                <Route path="/support/faq" element={<SuspenseWrapper><FAQ /></SuspenseWrapper>} />
 
                 {/* Auth */}
                 <Route path="/login" element={<SuspenseWrapper><Login /></SuspenseWrapper>} />

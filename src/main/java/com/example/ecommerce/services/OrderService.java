@@ -108,11 +108,13 @@ public class OrderService {
         order.setShippingFee(shippingFee);
 
         // Áp dụng voucher nếu có
-        if (dto.getVoucherCode() != null && !dto.getVoucherCode().trim().isEmpty()) {
-            Voucher voucher = voucherRepository.findActiveByCode(dto.getVoucherCode().trim())
+        Voucher voucherToApply = null;
+        if (dto.getVoucherCode() != null && !dto.getVoucherCode().trim().isEmpty() && !"null".equals(dto.getVoucherCode())) {
+            voucherToApply = voucherRepository.findActiveByCode(dto.getVoucherCode().trim())
                     .orElseThrow(() -> new BadRequestException("Mã giảm giá không hợp lệ hoặc đã hết hạn!"));
             order.setVoucherCode(dto.getVoucherCode());
-            // Discount sẽ tính sau khi có tổng tiền, nhưng tạm set 0
+        } else {
+            order.setVoucherCode(null);
             order.setDiscountAmount(0.0);
         }
 
@@ -158,13 +160,17 @@ public class OrderService {
             orderItemRepository.save(item);
         }
 
-        // Tính lại discount sau khi có items
-        if (order.getVoucherCode() != null) {
-            Voucher voucher = voucherRepository.findActiveByCode(order.getVoucherCode())
-                    .orElseThrow(() -> new RuntimeException("Voucher không còn hợp lệ!"));
-            double discount = calculateDiscount(order, voucher);
+        // 4. Áp dụng Voucher (nếu có) và tính tiền dựa trên Subtotal thực tế
+        if (voucherToApply != null) {
+            double discount = calculateDiscount(order, voucherToApply);
             order.setDiscountAmount(discount);
-            repository.save(order); // Update discount
+            
+            // Cập nhật lượt dùng Voucher ngay lập tức
+            Integer currentUsed = voucherToApply.getUsedCount() != null ? voucherToApply.getUsedCount() : 0;
+            voucherToApply.setUsedCount(currentUsed + 1);
+            voucherRepository.save(voucherToApply);
+        } else {
+            order.setDiscountAmount(0.0);
         }
 
         Order finalOrder = repository.save(order);
@@ -196,11 +202,12 @@ public class OrderService {
 
     private double calculateDiscount(Order order, Voucher voucher) {
         double subtotal = order.getItems().stream()
-                .mapToDouble(item -> item.getSubTotal() != null ? item.getSubTotal() : 0.0)
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
 
         if (subtotal < voucher.getMinOrderAmount()) {
-            throw new BadRequestException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher!");
+            throw new BadRequestException("Đơn hàng phải tối thiểu " + 
+                String.format("%,.0f", voucher.getMinOrderAmount()) + "đ để dùng mã này!");
         }
 
         double discount = subtotal * (voucher.getDiscountPercent() / 100.0);

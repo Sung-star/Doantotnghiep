@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
 import com.example.ecommerce.entities.Order;
 import com.example.ecommerce.entities.OrderItem;
+import com.example.ecommerce.entities.Voucher;
+
 import jakarta.mail.internet.MimeMessage;
 
 @Service
@@ -100,5 +103,21 @@ public class EmailService {
             "</body></html>";
 
         sendHtmlEmail(order.getClient().getEmail(), subject, htmlBody);
+    }
+
+    public void sendNewVoucherNotification(String email, Voucher voucher) {
+        String subject = "🎁 QUÀ TẶNG BẤT NGỜ: MÃ GIẢM GIÁ " + voucher.getCode() + " ĐÃ SẴN SÀNG!";
+        String htmlBody = "<html><body style='font-family: Arial, sans-serif;'>" +
+            "<div style='max-width: 600px; margin: 0 auto; border: 2px dashed #000; padding: 20px; text-align: center;'>" +
+            "  <h2 style='color: #d9534f;'>CHỈ DÀNH RIÊNG CHO BẠN!</h2>" +
+            "  <p>Sử dụng mã dưới đây để nhận ưu đãi cực khủng khi mua sắm tại <strong>Sporting Shop</strong>:</p>" +
+            "  <div style='background: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; border: 1px solid #ddd; margin: 20px 0;'>" +
+            voucher.getCode() + "</div>" +
+            "  <p><strong>Ưu đãi:</strong> Giảm ngay " + voucher.getDiscountPercent() + "% cho đơn hàng từ " + String.format("%,.0f", voucher.getMinOrderAmount()) + "đ</p>" +
+            "  <p style='font-size: 12px; color: #777;'>*Hạn sử dụng đến: " + voucher.getExpiryDate().toString() + "</p>" +
+            "  <a href='http://localhost:3000' style='background: #000; color: #fff; padding: 10px 20px; text-decoration: none; font-weight: bold;'>MUA SẮM NGAY</a>" +
+            "</div>" +
+            "</body></html>";
+        sendHtmlEmail(email, subject, htmlBody);
     }
 }

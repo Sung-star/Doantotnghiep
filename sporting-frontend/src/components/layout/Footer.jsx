@@ -1,10 +1,29 @@
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Facebook, Instagram, Twitter, Mail, Phone, MapPin, 
-  Send, ChevronRight, Github 
+  Send, ChevronRight, Github, CheckCircle 
 } from 'lucide-react';
 
 const Footer = () => {
+  const [email, setEmail] = useState('');
+  const [subscribeStatus, setSubscribeStatus] = useState('idle'); // idle, loading, success, error
+
+  const handleSubscribe = (e) => {
+    e.preventDefault();
+    if (!email || !email.includes('@')) {
+      setSubscribeStatus('error');
+      return;
+    }
+    setSubscribeStatus('loading');
+    // Giả lập API call
+    setTimeout(() => {
+      setSubscribeStatus('success');
+      setEmail('');
+      setTimeout(() => setSubscribeStatus('idle'), 3000);
+    }, 1000);
+  };
+
   return (
     <footer className="bg-dark text-white mt-auto border-top border-secondary">
       {/* Phần 1: Newsletter - Đăng ký nhận tin */}
@@ -16,16 +35,25 @@ const Footer = () => {
               <p className="text-secondary mb-0 small">Nhận ngay ưu đãi 10% cho đơn hàng đầu tiên của bạn.</p>
             </div>
             <div className="col-lg-6">
-              <div className="input-group">
+              <form onSubmit={handleSubscribe} className="input-group">
                 <input 
                   type="email" 
-                  className="form-control bg-transparent text-white border-secondary" 
+                  value={email}
+                  onChange={(e) => { setEmail(e.target.value); if(subscribeStatus === 'error') setSubscribeStatus('idle'); }}
+                  className={`form-control bg-transparent text-white ${subscribeStatus === 'error' ? 'border-danger' : 'border-secondary'}`} 
                   placeholder="Nhập email của bạn..."
+                  disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}
                 />
-                <button className="btn btn-outline-light px-4 d-flex align-items-center gap-2">
-                  Gửi ngay <Send size={16} />
+                <button 
+                  type="submit"
+                  className={`btn px-4 d-flex align-items-center gap-2 ${subscribeStatus === 'success' ? 'btn-success' : 'btn-outline-light'}`}
+                  disabled={subscribeStatus === 'loading' || subscribeStatus === 'success'}
+                >
+                  {subscribeStatus === 'loading' ? 'Đang gửi...' : subscribeStatus === 'success' ? <><CheckCircle size={16} /> Đã đăng ký</> : <>Gửi ngay <Send size={16} /></>}
                 </button>
-              </div>
+              </form>
+              {subscribeStatus === 'error' && <small className="text-danger mt-1 d-block">Vui lòng nhập email hợp lệ.</small>}
+              {subscribeStatus === 'success' && <small className="text-success mt-1 d-block">Cảm ơn bạn đã đăng ký!</small>}
             </div>
           </div>
         </div>
@@ -42,16 +70,16 @@ const Footer = () => {
               Từng sản phẩm đều được tuyển chọn kỹ lưỡng về chất liệu và xu hướng.
             </p>
             <div className="d-flex gap-3">
-              <a href="#" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
+              <a href="https://facebook.com" target="_blank" rel="noreferrer" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
                 <Facebook size={18} />
               </a>
-              <a href="#" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
+              <a href="https://instagram.com" target="_blank" rel="noreferrer" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
                 <Instagram size={18} />
               </a>
-              <a href="#" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
+              <a href="https://twitter.com" target="_blank" rel="noreferrer" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
                 <Twitter size={18} />
               </a>
-              <a href="#" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
+              <a href="https://github.com" target="_blank" rel="noreferrer" className="social-icon rounded-circle border border-secondary p-2 text-white transition">
                 <Github size={18} />
               </a>
             </div>
@@ -61,10 +89,17 @@ const Footer = () => {
           <div className="col-lg-2 col-md-6">
             <h6 className="fw-bold mb-4 text-uppercase small">Mua sắm</h6>
             <ul className="list-unstyled footer-links">
-              {['Trang chủ', 'Sản phẩm', 'Nam', 'Nữ', 'Bộ sưu tập'].map((link) => (
-                <li key={link} className="mb-2">
-                  <Link to="/" className="text-secondary text-decoration-none d-flex align-items-center gap-1 hover-white shadow-none">
-                    <ChevronRight size={12} /> {link}
+              {[ 
+                { label: 'Trang chủ', to: '/' },
+                { label: 'Sản phẩm', to: '/products' },
+                { label: 'Nam', to: '/men' },
+                { label: 'Nữ', to: '/women' },
+                { label: 'Bộ sưu tập', to: '/collections' },
+                { label: 'Về chúng tôi', to: '/about' }
+              ].map((link) => (
+                <li key={link.to} className="mb-2">
+                  <Link to={link.to} className="text-secondary text-decoration-none d-flex align-items-center gap-1 hover-white shadow-none">
+                    <ChevronRight size={12} /> {link.label}
                   </Link>
                 </li>
               ))}
@@ -75,11 +110,17 @@ const Footer = () => {
           <div className="col-lg-2 col-md-6">
             <h6 className="fw-bold mb-4 text-uppercase small">Hỗ trợ khách hàng</h6>
             <ul className="list-unstyled footer-links">
-              {['Chính sách đổi trả', 'Vận chuyển', 'Thanh toán', 'Bảo mật', 'Câu hỏi thường gặp'].map((item) => (
-                <li key={item} className="mb-2">
-                  <a href="#" className="text-secondary text-decoration-none d-flex align-items-center gap-1 hover-white shadow-none">
-                    <ChevronRight size={12} /> {item}
-                  </a>
+              {[
+                { label: 'Chính sách đổi trả', to: '/support/return-policy' },
+                { label: 'Vận chuyển', to: '/support/shipping' },
+                { label: 'Thanh toán', to: '/support/payment' },
+                { label: 'Bảo mật', to: '/support/security' },
+                { label: 'Câu hỏi thường gặp', to: '/support/faq' }
+              ].map((item) => (
+                <li key={item.to} className="mb-2">
+                  <Link to={item.to} className="text-secondary text-decoration-none d-flex align-items-center gap-1 hover-white shadow-none">
+                    <ChevronRight size={12} /> {item.label}
+                  </Link>
                 </li>
               ))}
             </ul>

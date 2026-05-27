@@ -3,6 +3,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+import VoucherSelector from './VoucherSelector';
 import { 
   FaQrcode, FaMoneyBillWave, FaCheckCircle,
   FaMapMarkerAlt, FaUser, FaPhoneAlt, FaArrowLeft,
@@ -14,7 +15,8 @@ const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
+
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
   
@@ -25,8 +27,6 @@ const Checkout = () => {
   });
   
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [voucherCode, setVoucherCode] = useState('');
-  const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [shippingFee, setShippingFee] = useState(0);
   const [orderResponse, setOrderResponse] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -142,36 +142,21 @@ const Checkout = () => {
     }
   }, [selectedProvince, selectedDistrict, selectedWard, detailAddress, provinces, districts, wards]);
 
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) return;
-    try {
-      const res = await api.get('/vouchers');
-      const voucher = res.data.find(v => v.code === voucherCode.trim() && v.active);
-      
-      if (!voucher) {
-        alert("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
-        return;
+  // Tính toán Subtotal từ giỏ hàng
+  const subtotal = getTotalPrice();
+
+  // Logic tính tiền giảm (Thực hiện ngay trên Frontend để UX mượt mà)
+  const calculateDiscountAmount = () => {
+      if (!selectedVoucher || subtotal < selectedVoucher.minOrderAmount) return 0;
+      let discount = subtotal * (selectedVoucher.discountPercent / 100);
+      if (selectedVoucher.maxDiscountAmount && discount > selectedVoucher.maxDiscountAmount) {
+          discount = selectedVoucher.maxDiscountAmount;
       }
-
-      const subtotal = Number(getTotalPrice());
-      const minAmount = Number(voucher.minOrderAmount);
-
-      if (subtotal < minAmount) {
-        alert(`Đơn hàng tối thiểu ${minAmount.toLocaleString()}đ để dùng mã này!`);
-        return;
-      }
-
-      let discount = subtotal * (Number(voucher.discountPercent) / 100);
-      if (voucher.maxDiscountAmount) {
-        discount = Math.min(discount, Number(voucher.maxDiscountAmount));
-      }
-
-      setAppliedVoucher({ ...voucher, discount });
-      alert("Áp dụng mã giảm giá thành công!");
-    } catch (err) {
-      alert("Lỗi khi kiểm tra mã giảm giá");
-    }
+      return discount;
   };
+
+  const discountAmount = calculateDiscountAmount();
+  const finalTotal = subtotal + shippingFee - discountAmount;
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
@@ -179,20 +164,19 @@ const Checkout = () => {
     if (!shippingInfo.address) return alert("Vui lòng nhập địa chỉ giao hàng!");
 
     setLoading(true);
-    const orderDto = {
+    const orderDto = { // orderData was a floating snippet, now correctly defined as orderDto
       clientId: user.id,
       shippingName: shippingInfo.fullName,
       shippingPhone: shippingInfo.phone,
       shippingAddress: shippingInfo.address,
-      voucherCode: voucherCode,
-      items: cartItems.map(item => ({ 
-        productId: item.id, 
+      voucherCode: selectedVoucher ? selectedVoucher.code : null, // Sử dụng mã từ selectedVoucher
+      items: cartItems.map(item => ({
+        productId: item.id,
         quantity: item.quantity,
         sizeName: item.selectedSize?.size,
         color: item.selectedColor
       }))
     };
-
     try {
       const res = await api.post('/orders', orderDto);
       const newOrder = res.data;
@@ -360,33 +344,32 @@ const Checkout = () => {
 
                     {/* Voucher Section */}
                     <div className="mb-4">
-                        <label className="fw-bold small text-muted text-uppercase mb-2">MÃ GIẢM GIÁ (VOUCHER)</label>
-                        <div className="d-flex gap-2">
-                            <input type="text" className="luxury-input flex-grow-1" placeholder="NHẬP MÃ TẠI ĐÂY" 
-                                value={voucherCode} onChange={e => setVoucherCode(e.target.value.toUpperCase())} />
-                            <button className="luxury-button" style={{padding: '0 1.5rem'}} onClick={handleApplyVoucher}>ÁP DỤNG</button>
-                        </div>
+                        <VoucherSelector 
+                            subtotal={subtotal} 
+                            onSelect={(v) => setSelectedVoucher(v)} 
+                            selectedVoucher={selectedVoucher} 
+                        />
                     </div>
 
                     <div className="space-y-3 mb-4">
                         <div className="d-flex justify-content-between text-muted">
                             <span>Tạm tính:</span>
-                            <span className="fw-bold">{getTotalPrice().toLocaleString()}đ</span>
+                            <span className="fw-bold">{subtotal.toLocaleString()}đ</span>
                         </div>
                         <div className="d-flex justify-content-between text-muted">
                             <span>Phí vận chuyển:</span>
                             <span className="fw-bold text-success">+{shippingFee?.toLocaleString()}đ</span>
                         </div>
-                        {appliedVoucher && (
+                        {discountAmount > 0 && (
                             <div className="d-flex justify-content-between text-danger">
-                                <span>Giảm giá (Voucher):</span>
-                                <span className="fw-bold">-{appliedVoucher.discount?.toLocaleString()}đ</span>
+                                <span>Giảm giá ({selectedVoucher.code}):</span>
+                                <span className="fw-bold">-{discountAmount.toLocaleString()}đ</span>
                             </div>
                         )}
                         <hr className="my-3 border-light" />
                         <div className="d-flex justify-content-between h3 mb-0">
                             <span className="fw-black tracking-tighter">TỔNG CỘNG</span>
-                            <span className="fw-black text-dark">{(getTotalPrice() + shippingFee - (appliedVoucher?.discount || 0)).toLocaleString()}đ</span>
+                            <span className="fw-black text-dark">{finalTotal.toLocaleString()}đ</span>
                         </div>
                     </div>
 

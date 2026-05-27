@@ -4,11 +4,22 @@ import { FaTrash, FaEdit, FaPlus, FaTicketAlt, FaCheck, FaTimes } from 'react-ic
 
 const AdminVouchers = () => {
     const [vouchers, setVouchers] = useState([]);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
     const [editingVoucher, setEditingVoucher] = useState(null);
     const [formData, setFormData] = useState({
-        code: '', description: '', discountPercent: 0, maxDiscountAmount: 0, minOrderAmount: 0, expiryDate: '', active: true
+        code: '',
+        description: '',
+        discountPercent: 0,
+        maxDiscountAmount: 0,
+        minOrderAmount: 0,
+        expiryDate: '',
+        active: true,
+        startDate: '',
+        usageLimit: '',
+        assignedToAll: true,
+        assignedUserIds: []
     });
 
     const fetchVouchers = async () => {
@@ -20,14 +31,26 @@ const AdminVouchers = () => {
         setLoading(false);
     };
 
-    useEffect(() => { fetchVouchers(); }, []);
+    const fetchUsers = async () => {
+        try {
+            const res = await api.get('/users');
+            setUsers(res.data || []);
+        } catch (err) {
+            console.error('Không lấy được danh sách người dùng', err);
+        }
+    };
+
+    useEffect(() => { fetchVouchers(); fetchUsers(); }, []);
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         try {
             const dataToSubmit = { 
                 ...formData, 
-                expiryDate: new Date(formData.expiryDate).toISOString() 
+                expiryDate: new Date(formData.expiryDate).toISOString(),
+                startDate: formData.startDate ? new Date(formData.startDate).toISOString() : null,
+                usageLimit: formData.usageLimit ? Number(formData.usageLimit) : null,
+                assignedUserIds: formData.assignedToAll ? [] : formData.assignedUserIds
             };
             if (editingVoucher) {
                 await api.put(`/vouchers/${editingVoucher.id}`, dataToSubmit);
@@ -37,7 +60,7 @@ const AdminVouchers = () => {
             setShowModal(false);
             fetchVouchers();
             setEditingVoucher(null);
-            setFormData({ code: '', description: '', discountPercent: 0, maxDiscountAmount: 0, minOrderAmount: 0, expiryDate: '', active: true });
+            setFormData({ code: '', description: '', discountPercent: 0, maxDiscountAmount: 0, minOrderAmount: 0, expiryDate: '', active: true, startDate: '', usageLimit: '', assignedToAll: true, assignedUserIds: [] });
         } catch (err) {
             alert("Lỗi khi lưu voucher!");
         }
@@ -59,7 +82,11 @@ const AdminVouchers = () => {
             maxDiscountAmount: v.maxDiscountAmount,
             minOrderAmount: v.minOrderAmount,
             expiryDate: v.expiryDate ? new Date(v.expiryDate).toISOString().slice(0, 16) : '',
-            active: v.active
+            active: v.active,
+            startDate: v.startDate ? new Date(v.startDate).toISOString().slice(0, 16) : '',
+            usageLimit: v.usageLimit ?? '',
+            assignedToAll: v.assignedToAll ?? true,
+            assignedUserIds: Array.isArray(v.assignedUsers) ? v.assignedUsers.map(u => u.id) : []
         });
         setShowModal(true);
     };
@@ -85,6 +112,7 @@ const AdminVouchers = () => {
                                     <th>Giảm tối đa</th>
                                     <th>Đơn tối thiểu</th>
                                     <th>Hết hạn</th>
+                                    <th>Loại</th>
                                     <th>Trạng thái</th>
                                     <th className="text-center">Thao tác</th>
                                 </tr>
@@ -98,6 +126,13 @@ const AdminVouchers = () => {
                                         <td>{v.maxDiscountAmount?.toLocaleString()}đ</td>
                                         <td>{v.minOrderAmount?.toLocaleString()}đ</td>
                                         <td>{new Date(v.expiryDate).toLocaleDateString('vi-VN')}</td>
+                                        <td>
+                                            {v.assignedToAll ? (
+                                                <span className="badge bg-info text-dark">Phát cho tất cả</span>
+                                            ) : (
+                                                <span className="badge bg-warning text-dark">Gán riêng ({v.assignedUsers?.length || 0})</span>
+                                            )}
+                                        </td>
                                         <td>
                                             {v.active ? <span className="badge bg-success">Đang chạy</span> : <span className="badge bg-secondary">Tắt</span>}
                                         </td>
@@ -146,8 +181,16 @@ const AdminVouchers = () => {
                                             <input type="number" className="form-control" required value={formData.minOrderAmount} onChange={e => setFormData({...formData, minOrderAmount: e.target.value})} />
                                         </div>
                                         <div className="col-md-6">
+                                            <label className="fw-bold small text-muted text-uppercase mb-1">Ngày bắt đầu</label>
+                                            <input type="datetime-local" className="form-control" value={formData.startDate} onChange={e => setFormData({...formData, startDate: e.target.value})} />
+                                        </div>
+                                        <div className="col-md-6">
                                             <label className="fw-bold small text-muted text-uppercase mb-1">Ngày hết hạn</label>
                                             <input type="datetime-local" className="form-control" required value={formData.expiryDate} onChange={e => setFormData({...formData, expiryDate: e.target.value})} />
+                                        </div>
+                                        <div className="col-md-6">
+                                            <label className="fw-bold small text-muted text-uppercase mb-1">Số lượt dùng tối đa</label>
+                                            <input type="number" className="form-control" min="1" value={formData.usageLimit} onChange={e => setFormData({...formData, usageLimit: e.target.value})} />
                                         </div>
                                         <div className="col-md-6">
                                             <label className="fw-bold small text-muted text-uppercase mb-1">Trạng thái</label>
@@ -156,6 +199,23 @@ const AdminVouchers = () => {
                                                 <option value="false">Tạm dừng</option>
                                             </select>
                                         </div>
+                                        <div className="col-12">
+                                            <div className="form-check form-switch mb-3">
+                                                <input className="form-check-input" type="checkbox" id="assignedToAll" checked={formData.assignedToAll} onChange={e => setFormData({...formData, assignedToAll: e.target.checked})} />
+                                                <label className="form-check-label fw-bold small" htmlFor="assignedToAll">Phát cho tất cả người dùng</label>
+                                            </div>
+                                        </div>
+                                        {!formData.assignedToAll && (
+                                            <div className="col-12">
+                                                <label className="fw-bold small text-muted text-uppercase mb-1">Chọn người dùng nhận voucher</label>
+                                                <select className="form-select" multiple value={formData.assignedUserIds} onChange={e => setFormData({...formData, assignedUserIds: Array.from(e.target.selectedOptions, option => Number(option.value))})}>
+                                                    {users.map(user => (
+                                                        <option key={user.id} value={user.id}>{user.name} ({user.email})</option>
+                                                    ))}
+                                                </select>
+                                                <div className="form-text">Giữ Ctrl/Cmd để chọn nhiều người dùng.</div>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                                 <div className="modal-footer border-0 p-4 pt-0">

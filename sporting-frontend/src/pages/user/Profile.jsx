@@ -1,17 +1,19 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../api/axiosConfig';
-import { Camera, User, Phone, Mail, Shield, Save, ArrowLeft } from 'lucide-react';
+import { Camera, User, Phone, Mail, Shield, Save, ArrowLeft, Ticket } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-import { FaMapMarkerAlt } from 'react-icons/fa';
+import { FaMapMarkerAlt, FaCopy } from 'react-icons/fa';
 
 const Profile = () => {
   const { user, updateUserInfo } = useAuth();
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState('profile'); // 'profile' or 'addresses'
   const [formData, setFormData] = useState({ name: '', phone: '', email: '', imgUrl: '' });
+  const [loadingUser, setLoadingUser] = useState(true);
   const [loading, setLoading] = useState(false);
   const [addresses, setAddresses] = useState([]);
+  const [vouchers, setVouchers] = useState([]);
   const [showAddAddress, setShowAddAddress] = useState(false);
   const [addressFormData, setAddressFormData] = useState({
     fullName: '', phone: '', province: '', district: '', ward: '', detail: '', isDefault: false
@@ -30,15 +32,28 @@ const Profile = () => {
         imgUrl: user.imgUrl || ''
       });
       fetchAddresses();
+      fetchVouchers();
+      setLoadingUser(false);
     }
   }, [user]);
 
   const fetchAddresses = async () => {
+    if (!user?.id) return;
     try {
       const res = await api.get(`/addresses/user/${user.id}`);
       setAddresses(res.data);
     } catch (err) {
       console.error(err);
+    }
+  };
+
+  const fetchVouchers = async () => {
+    if (!user?.id) return;
+    try {
+      const res = await api.get(`/vouchers/available/user/${user.id}`);
+      setVouchers(res.data);
+    } catch (err) {
+      console.error('Không lấy được ví voucher', err);
     }
   };
 
@@ -68,7 +83,7 @@ const Profile = () => {
     e.preventDefault();
     setLoading(true);
     try {
-      const res = await api.put(`/users/${user.id}`, formData);
+      const res = await api.put(`/users/${user?.id}`, formData);
       if (res.status === 200) {
         updateUserInfo(res.data);
         alert("Tuyệt vời! Hồ sơ của bạn đã được cập nhật.");
@@ -128,6 +143,14 @@ const Profile = () => {
     fetchAddresses();
   };
 
+  if (loadingUser) {
+    return (
+      <div className="d-flex justify-content-center align-items-center min-vh-100">
+        <div className="spinner-border text-primary" role="status"></div>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-page py-5 bg-light min-vh-100" style={{ fontFamily: '"Inter", sans-serif' }}>
       <div className="container">
@@ -144,6 +167,9 @@ const Profile = () => {
                     </button>
                     <button onClick={() => setActiveTab('addresses')} className={`px-4 py-2 rounded-3 border-0 fw-bold transition-all ${activeTab === 'addresses' ? 'bg-dark text-white' : 'bg-transparent text-muted'}`}>
                         SỔ ĐỊA CHỈ ({addresses.length})
+                    </button>
+                    <button onClick={() => setActiveTab('vouchers')} className={`px-4 py-2 rounded-3 border-0 fw-bold transition-all d-flex align-items-center gap-2 ${activeTab === 'vouchers' ? 'bg-dark text-white' : 'bg-transparent text-muted'}`}>
+                        <Ticket size={18} /> VÍ VOUCHER ({vouchers.length})
                     </button>
                 </div>
             </div>
@@ -200,7 +226,7 @@ const Profile = () => {
                     </form>
                     </div>
                 </div>
-              ) : (
+              ) : activeTab === 'addresses' ? (
                 <div className="p-5 bg-white text-start">
                     <div className="d-flex align-items-center justify-content-between mb-5">
                         <div className="d-flex align-items-center gap-2">
@@ -295,7 +321,50 @@ const Profile = () => {
                         ))}
                     </div>
                 </div>
-              )}
+              ) : activeTab === 'vouchers' ? (
+                <div className="p-5 bg-white text-start">
+                    <div className="d-flex align-items-center gap-2 mb-5">
+                        <div className="bg-dark" style={{ width: '30px', height: '2px' }}></div>
+                        <h5 className="fw-black text-dark text-uppercase m-0 tracking-widest">KHO VOUCHER CỦA BẠN</h5>
+                    </div>
+
+                    {vouchers.length === 0 ? (
+                        <div className="p-4 bg-light rounded-4 text-center text-muted">
+                            Hiện tại bạn chưa có voucher nào trong ví.
+                        </div>
+                    ) : (
+                        <div className="row g-4">
+                            {vouchers.map((v) => (
+                                <div className="col-lg-6" key={v.id}>
+                                    <div className="luxury-card overflow-hidden p-0 d-flex" style={{ border: '1px dashed var(--border-color)' }}>
+                                        <div className="bg-dark text-white p-4 d-flex flex-column justify-content-center align-items-center" style={{ width: '30%' }}>
+                                            <Ticket size={32} className="mb-2" />
+                                            <div className="small fw-bold text-center">{v.code}</div>
+                                        </div>
+                                        <div className="p-4 bg-light d-flex flex-column justify-content-between flex-grow-1" style={{ borderLeft: '2px dashed #ccc' }}>
+                                            <div>
+                                                <div className="d-flex align-items-center justify-content-between mb-2">
+                                                    <h6 className="fw-black text-uppercase mb-1">{v.description || 'Voucher ưu đãi'}</h6>
+                                                    <span className={`badge ${v.assignedToAll ? 'bg-primary' : 'bg-warning text-dark'}`}>
+                                                        {v.assignedToAll ? 'Phát cho tất cả' : 'Dành riêng cho bạn'}
+                                                    </span>
+                                                </div>
+                                                <p className="small text-muted mb-2">Áp dụng: {v.discountPercent}% giảm{v.maxDiscountAmount ? ` (tối đa ${Number(v.maxDiscountAmount).toLocaleString()}đ)` : ''}</p>
+                                                <p className="small text-muted mb-1">Đơn tối thiểu: {v.minOrderAmount?.toLocaleString() || 0}đ</p>
+                                                <p className="small text-muted mb-0">HSD: {v.expiryDate ? new Date(v.expiryDate).toLocaleDateString('vi-VN') : 'Không giới hạn'}</p>
+                                            </div>
+                                            <div className="d-flex justify-content-between align-items-end mt-2">
+                                                <span className="badge bg-white text-dark border p-2 px-3 fw-bold tracking-widest">{v.code}</span>
+                                                <button className="btn btn-outline-dark btn-sm rounded-circle p-2" onClick={() => { navigator.clipboard.writeText(v.code); alert('Đã copy mã!'); }}><FaCopy/></button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+              ) : null}
             </div>
           </div>
         </div>

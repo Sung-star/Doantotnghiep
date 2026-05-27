@@ -16,6 +16,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
+import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -26,7 +27,6 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.JoinTable;
 import jakarta.persistence.ManyToMany;
 import jakarta.persistence.OneToMany;
-import jakarta.persistence.CascadeType;
 import jakarta.persistence.Table;
 
 @Entity
@@ -64,6 +64,10 @@ public class User implements UserDetails, Serializable {
         inverseJoinColumns = @JoinColumn(name = "product_id")
     )
     private Set<Product> wishlist = new HashSet<>();
+
+    @JsonIgnore
+    @ManyToMany(mappedBy = "assignedUsers")
+    private Set<Voucher> vouchers = new HashSet<>();
 
     @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<UserAddress> addresses = new ArrayList<>();
