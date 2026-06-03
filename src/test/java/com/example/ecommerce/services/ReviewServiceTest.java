@@ -6,9 +6,8 @@ import static org.mockito.Mockito.*;
 import com.example.ecommerce.entities.Product;
 import com.example.ecommerce.entities.Review;
 import com.example.ecommerce.entities.User;
-import com.example.ecommerce.repositories.ProductRepository;
+import com.example.ecommerce.repositories.OrderRepository;
 import com.example.ecommerce.repositories.ReviewRepository;
-import com.example.ecommerce.repositories.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -30,10 +29,7 @@ class ReviewServiceTest {
     private ReviewRepository reviewRepository;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
-    private ProductRepository productRepository;
+    private OrderRepository orderRepository;
 
     @InjectMocks
     private ReviewService reviewService;
@@ -66,13 +62,10 @@ class ReviewServiceTest {
     @Test
     @DisplayName("Should find review by ID successfully")
     void testFindByIdSuccess() {
-        // Arrange
         when(reviewRepository.findById(1L)).thenReturn(Optional.of(testReview));
 
-        // Act
         Review result = reviewRepository.findById(1L).orElse(null);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals(5, result.getRating());
@@ -82,74 +75,71 @@ class ReviewServiceTest {
     @Test
     @DisplayName("Should return empty optional when review not found")
     void testFindByIdNotFound() {
-        // Arrange
         when(reviewRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertFalse(reviewRepository.findById(999L).isPresent());
     }
 
     @Test
     @DisplayName("Should find all reviews for a product")
     void testFindByProductIdSuccess() {
-        // Arrange
         List<Review> reviews = new ArrayList<>();
         reviews.add(testReview);
         when(reviewRepository.findByProductId(1L)).thenReturn(reviews);
 
-        // Act
         List<Review> result = reviewService.findByProductId(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
-        assertEquals("Great product!", result.get(0).getContent());
+        assertEquals(testProduct.getId(), result.get(0).getProduct().getId());
     }
 
     @Test
     @DisplayName("Should return empty list when no reviews exist")
     void testFindByProductIdEmpty() {
-        // Arrange
         when(reviewRepository.findByProductId(999L)).thenReturn(new ArrayList<>());
 
-        // Act
         List<Review> result = reviewService.findByProductId(999L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(0, result.size());
     }
 
     @Test
-    @DisplayName("Should insert review successfully")
+    @DisplayName("Should insert review successfully when user has bought product")
     void testInsertReviewSuccess() {
-        // Arrange
+        // Phải mock canUserReview = true để insert không throw exception
+        when(orderRepository.hasUserBoughtProduct(1L, 1L)).thenReturn(true);
         when(reviewRepository.save(any(Review.class))).thenReturn(testReview);
 
-        // Act
         Review result = reviewService.insert(testReview);
 
-        // Assert
         assertNotNull(result);
         assertEquals(5, result.getRating());
         verify(reviewRepository, times(1)).save(testReview);
     }
 
     @Test
+    @DisplayName("Should throw exception when user has not bought product")
+    void testInsertReviewNotAllowed() {
+        when(orderRepository.hasUserBoughtProduct(1L, 1L)).thenReturn(false);
+
+        assertThrows(RuntimeException.class, () -> reviewService.insert(testReview));
+        verify(reviewRepository, never()).save(any());
+    }
+
+    @Test
     @DisplayName("Should validate rating between 1 and 5")
     void testRatingValidation() {
-        // Arrange
         Review invalidReview = new Review();
-        invalidReview.setRating(6); // Invalid: > 5
+        invalidReview.setRating(6);
 
-        // Act & Assert
         assertTrue(invalidReview.getRating() > 5);
     }
 
     @Test
-    @DisplayName("Should delete review successfully")
-    void testDeleteReviewSuccess() {
-        // Arrange
+    @DisplayName("Should update review successfully")
+    void testUpdateReviewSuccess() {
         Review updateData = new Review();
         updateData.setRating(4);
         updateData.setComment("Good product");
@@ -158,10 +148,8 @@ class ReviewServiceTest {
         testReview.setComment("Good product");
         when(reviewRepository.save(any(Review.class))).thenReturn(testReview);
 
-        // Act
         Review result = reviewRepository.save(testReview);
 
-        // Assert
         assertNotNull(result);
         assertEquals(4, result.getRating());
         assertEquals("Good product", result.getComment());
@@ -170,43 +158,22 @@ class ReviewServiceTest {
     @Test
     @DisplayName("Should delete review by ID")
     void testDeleteReviewById() {
-        // Arrange
         doNothing().when(reviewRepository).deleteById(1L);
 
-        // Act
         reviewService.delete(1L);
 
-        // Assert
         verify(reviewRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    @DisplayName("Should find reviews by product ID")
-    void testFindByProductIdSuccess() {
-        // Arrange
-        List<Review> reviews = new ArrayList<>();
-        reviews.add(testReview);
-        when(reviewRepository.findByProductId(1L)).thenReturn(reviews);
-
-        // Act
-        List<Review> result = reviewService.findByProductId(1L);
-
-        // Assert
-        assertNotNull(result);
-        assertEquals(1, result.size());
-        assertEquals(testProduct.getId(), result.get(0).getProduct().getId());
     }
 
     @Test
     @DisplayName("Should calculate average rating for product")
     void testCalculateAverageRating() {
-        // Arrange
         Review review1 = new Review();
         review1.setRating(5);
-        
+
         Review review2 = new Review();
         review2.setRating(3);
-        
+
         Review review3 = new Review();
         review3.setRating(4);
 
@@ -215,38 +182,31 @@ class ReviewServiceTest {
         reviews.add(review2);
         reviews.add(review3);
 
-        // Act
         double average = reviews.stream()
             .mapToDouble(Review::getRating)
             .average()
             .orElse(0.0);
 
-        // Assert
         assertEquals(4.0, average);
     }
 
     @Test
-    @DisplayName("Should validate review content is not empty")
+    @DisplayName("Should validate review comment is not empty")
     void testReviewContentValidation() {
-        // Arrange
         Review emptyReview = new Review();
-        emptyReview.setContent("");
+        emptyReview.setComment("");
 
-        // Act & Assert
-        assertTrue(emptyReview.getContent().isEmpty());
+        assertTrue(emptyReview.getComment().isEmpty());
     }
 
     @Test
     @DisplayName("Should set review date on creation")
     void testReviewDateTimestamp() {
-        // Arrange
         Instant beforeCreate = Instant.now();
 
-        // Act
-        testReview.setReviewDate(Instant.now());
+        testReview.setMoment(Instant.now());
 
-        // Assert
-        assertNotNull(testReview.getReviewDate());
-        assertTrue(testReview.getReviewDate().isAfter(beforeCreate));
+        assertNotNull(testReview.getMoment());
+        assertTrue(testReview.getMoment().isAfter(beforeCreate));
     }
 }

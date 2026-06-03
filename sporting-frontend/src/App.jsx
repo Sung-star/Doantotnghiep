@@ -4,6 +4,7 @@ import { AuthProvider } from './contexts/AuthContext';
 import { CartProvider } from './contexts/CartContext';
 import { WishlistProvider } from './contexts/WishlistContext';
 
+
 import SupportCenter from './components/common/SupportCenter';
 import ProtectedRoute from './components/common/ProtectedRoute';
 import ErrorBoundary from './components/common/ErrorBoundary';
@@ -26,6 +27,10 @@ const Profile = lazy(() => import('./pages/user/Profile'));
 const Orders = lazy(() => import('./pages/user/Orders'));
 const Wishlist = lazy(() => import('./pages/user/Wishlist'));
 const PaymentResult = lazy(() => import('./pages/user/PaymentResult'));
+
+// ✅ MỚI: Contact & Voucher
+const ContactPage = lazy(() => import('./pages/user/Contactpage'));
+const VoucherPage = lazy(() => import('./pages/user/Voucherpage'));
 
 // Support pages
 const ReturnPolicy = lazy(() => import('./pages/support/ReturnPolicy'));
@@ -92,6 +97,10 @@ function App() {
                 <Route path="/men" element={<Navigate to="/products?category=Nam" replace />} />
                 <Route path="/women" element={<Navigate to="/products?category=Nữ" replace />} />
                 <Route path="/collections" element={<Navigate to="/products" replace />} />
+
+                {/* ✅ MỚI */}
+                <Route path="/contact" element={<SuspenseWrapper><ContactPage /></SuspenseWrapper>} />
+                <Route path="/vouchers" element={<SuspenseWrapper><VoucherPage /></SuspenseWrapper>} />
 
                 {/* Support */}
                 <Route path="/support/return-policy" element={<SuspenseWrapper><ReturnPolicy /></SuspenseWrapper>} />

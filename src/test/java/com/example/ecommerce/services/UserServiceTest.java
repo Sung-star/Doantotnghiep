@@ -35,24 +35,25 @@ class UserServiceTest {
 
     @BeforeEach
     void setUp() {
+        Role clientRole = new Role();
+        clientRole.setId(1L);
+        clientRole.setAuthority("CLIENT");
+
         testUser = new User();
         testUser.setId(1L);
         testUser.setName("Test User");
         testUser.setEmail("test@example.com");
         testUser.setPhone("0123456789");
-        testUser.setRole(Role.CLIENT);
+        testUser.setRoles(new java.util.HashSet<>(java.util.Arrays.asList(clientRole)));
     }
 
     @Test
     @DisplayName("Should find user by ID successfully")
     void testFindByIdSuccess() {
-        // Arrange
         when(userRepository.findById(1L)).thenReturn(Optional.of(testUser));
 
-        // Act
         User result = userService.findById(1L);
 
-        // Assert
         assertNotNull(result);
         assertEquals(1L, result.getId());
         assertEquals("Test User", result.getName());
@@ -63,10 +64,8 @@ class UserServiceTest {
     @Test
     @DisplayName("Should throw ResourceNotFoundException when user not found")
     void testFindByIdNotFound() {
-        // Arrange
         when(userRepository.findById(999L)).thenReturn(Optional.empty());
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> {
             userService.findById(999L);
         });
@@ -75,15 +74,12 @@ class UserServiceTest {
     @Test
     @DisplayName("Should find all users")
     void testFindAll() {
-        // Arrange
         List<User> users = new ArrayList<>();
         users.add(testUser);
         when(userRepository.findAll()).thenReturn(users);
 
-        // Act
         List<User> result = userService.findAll();
 
-        // Assert
         assertNotNull(result);
         assertEquals(1, result.size());
         assertEquals("Test User", result.get(0).getName());
@@ -92,13 +88,10 @@ class UserServiceTest {
     @Test
     @DisplayName("Should insert user successfully")
     void testInsertUserSuccess() {
-        // Arrange
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Act
         User result = userService.insert(testUser);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Test User", result.getName());
         verify(userRepository, times(1)).save(testUser);
@@ -107,7 +100,6 @@ class UserServiceTest {
     @Test
     @DisplayName("Should update user successfully")
     void testUpdateUserSuccess() {
-        // Arrange
         User updateData = new User();
         updateData.setName("Updated Name");
         updateData.setPhone("9876543210");
@@ -115,10 +107,8 @@ class UserServiceTest {
         when(userRepository.getReferenceById(1L)).thenReturn(testUser);
         when(userRepository.save(any(User.class))).thenReturn(testUser);
 
-        // Act
         User result = userService.update(1L, updateData);
 
-        // Assert
         assertNotNull(result);
         assertEquals("Updated Name", result.getName());
         assertEquals("9876543210", result.getPhone());
@@ -127,14 +117,12 @@ class UserServiceTest {
     @Test
     @DisplayName("Should throw ResourceNotFoundException when updating non-existent user")
     void testUpdateUserNotFound() {
-        // Arrange
         User updateData = new User();
         updateData.setName("Updated Name");
 
         when(userRepository.getReferenceById(999L)).thenThrow(
             new jakarta.persistence.EntityNotFoundException());
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> {
             userService.update(999L, updateData);
         });
@@ -143,24 +131,19 @@ class UserServiceTest {
     @Test
     @DisplayName("Should delete user successfully")
     void testDeleteUserSuccess() {
-        // Arrange
         when(userRepository.existsById(1L)).thenReturn(true);
         doNothing().when(userRepository).deleteById(1L);
 
-        // Act
         userService.delete(1L);
 
-        // Assert
         verify(userRepository, times(1)).deleteById(1L);
     }
 
     @Test
     @DisplayName("Should throw ResourceNotFoundException when deleting non-existent user")
     void testDeleteUserNotFound() {
-        // Arrange
         when(userRepository.existsById(999L)).thenReturn(false);
 
-        // Act & Assert
         assertThrows(ResourceNotFoundException.class, () -> {
             userService.delete(999L);
         });
@@ -169,12 +152,10 @@ class UserServiceTest {
     @Test
     @DisplayName("Should throw DatabaseException when deleting user with foreign key constraint")
     void testDeleteUserWithConstraint() {
-        // Arrange
         when(userRepository.existsById(1L)).thenReturn(true);
         doThrow(new DataIntegrityViolationException("Foreign key constraint"))
             .when(userRepository).deleteById(1L);
 
-        // Act & Assert
         assertThrows(DatabaseException.class, () -> {
             userService.delete(1L);
         });
@@ -183,7 +164,6 @@ class UserServiceTest {
     @Test
     @DisplayName("Should preserve password when updating user")
     void testUpdateUserPreservesPassword() {
-        // Arrange
         User existingUser = new User();
         existingUser.setId(1L);
         existingUser.setPassword("hashedPassword123");
@@ -196,10 +176,8 @@ class UserServiceTest {
         when(userRepository.getReferenceById(1L)).thenReturn(existingUser);
         when(userRepository.save(any(User.class))).thenReturn(existingUser);
 
-        // Act
         userService.update(1L, updateData);
 
-        // Assert
         assertEquals("hashedPassword123", existingUser.getPassword());
         verify(userRepository, times(1)).save(any());
     }

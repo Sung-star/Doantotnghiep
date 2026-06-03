@@ -26,7 +26,7 @@ public class VoucherService {
     private EmailService emailService;
 
     @Autowired
-    private SimpMessagingTemplate messagingTemplate; // Dùng để gửi tin nhắn WebSocket
+    private SimpMessagingTemplate messagingTemplate;
 
     public List<Voucher> findAll() {
         return repository.findAll();
@@ -49,22 +49,36 @@ public class VoucherService {
     public Voucher insert(Voucher obj) {
         Voucher saved = repository.save(obj);
 
+        // Gửi WebSocket NGAY trên main thread — không để lỗi email chặn
+        try {
+            System.out.println(">>> [WS] Chuẩn bị gửi notification cho voucher: " + saved.getCode());
+            messagingTemplate.convertAndSend("/topic/public-notifications", saved);
+            System.out.println(">>> [WS] Gửi thành công!");
+        } catch (Exception e) {
+            System.err.println(">>> [WS] Lỗi gửi WebSocket: " + e.getMessage());
+        }
+
+        // Gửi Email trong thread riêng — lỗi email không ảnh hưởng WebSocket
         new Thread(() -> {
             try {
-                messagingTemplate.convertAndSend("/topic/public-notifications", saved);
-
                 List<User> usersToNotify;
                 if (Boolean.TRUE.equals(saved.getAssignedToAll())) {
                     usersToNotify = userRepository.findAll();
                 } else {
-                    usersToNotify = saved.getAssignedUsers() == null ? List.of() : List.copyOf(saved.getAssignedUsers());
+                    usersToNotify = saved.getAssignedUsers() == null
+                            ? List.of()
+                            : List.copyOf(saved.getAssignedUsers());
                 }
-
                 for (User user : usersToNotify) {
-                    emailService.sendNewVoucherNotification(user.getEmail(), saved);
+                    try {
+                        emailService.sendNewVoucherNotification(user.getEmail(), saved);
+                    } catch (Exception e) {
+                        System.err.println(">>> [EMAIL] Lỗi gửi email cho "
+                                + user.getEmail() + ": " + e.getMessage());
+                    }
                 }
             } catch (Exception e) {
-                System.err.println("Lỗi gửi thông báo Voucher (WebSocket/Email): " + e.getMessage());
+                System.err.println(">>> [EMAIL] Lỗi chung: " + e.getMessage());
             }
         }).start();
 
@@ -82,27 +96,35 @@ public class VoucherService {
         updateData(entity, obj);
         Voucher saved = repository.save(entity);
 
-        // Gửi thông báo và email cho người dùng khi voucher được cập nhật/gán
+        // Gửi WebSocket NGAY trên main thread
+        try {
+            messagingTemplate.convertAndSend("/topic/public-notifications", saved);
+            System.out.println(">>> [WS] Gửi notification update voucher thành công!");
+        } catch (Exception e) {
+            System.err.println(">>> [WS] Lỗi gửi WebSocket khi update: " + e.getMessage());
+        }
+
+        // Gửi Email trong thread riêng
         new Thread(() -> {
             try {
-                messagingTemplate.convertAndSend("/topic/public-notifications", saved);
-
                 List<User> usersToNotify;
                 if (Boolean.TRUE.equals(saved.getAssignedToAll())) {
                     usersToNotify = userRepository.findAll();
                 } else {
-                    usersToNotify = saved.getAssignedUsers() == null ? List.of() : List.copyOf(saved.getAssignedUsers());
+                    usersToNotify = saved.getAssignedUsers() == null
+                            ? List.of()
+                            : List.copyOf(saved.getAssignedUsers());
                 }
-
                 for (User user : usersToNotify) {
                     try {
                         emailService.sendNewVoucherNotification(user.getEmail(), saved);
                     } catch (Exception e) {
-                        System.err.println("Lỗi gửi email thông báo cập nhật voucher cho " + user.getEmail() + ": " + e.getMessage());
+                        System.err.println(">>> [EMAIL] Lỗi gửi email cập nhật voucher cho "
+                                + user.getEmail() + ": " + e.getMessage());
                     }
                 }
             } catch (Exception e) {
-                System.err.println("Lỗi gửi thông báo Voucher (WebSocket/Email) khi update: " + e.getMessage());
+                System.err.println(">>> [EMAIL] Lỗi chung khi update: " + e.getMessage());
             }
         }).start();
 

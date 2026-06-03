@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { MessageSquare, X, Send, User, Sparkles, Headset, Clock, ChevronLeft, Image as ImageIcon, Loader2 } from 'lucide-react';
+import { MessageSquare, X, Send, Sparkles, Headset, Clock, ChevronLeft, Image as ImageIcon, Loader2 } from 'lucide-react';
 import SockJS from 'sockjs-client';
 import Stomp from 'stompjs';
 import api from '../../api/axiosConfig';
@@ -8,32 +8,40 @@ import './SupportCenter.css';
 
 const SupportCenter = () => {
     const [isOpen, setIsOpen] = useState(false);
-    const [activeTab, setActiveTab] = useState('menu'); // 'menu', 'ai', 'live'
+    const [activeTab, setActiveTab] = useState('menu');
     const [input, setInput] = useState("");
     const [loading, setLoading] = useState(false);
     const [isTyping, setIsTyping] = useState(false);
-    const [previewImage, setPreviewImage] = useState(null); // Để xem trước ảnh định gửi
+    const [previewImage, setPreviewImage] = useState(null);
     const [uploadingImage, setUploadingImage] = useState(false);
-    
+
     const [aiMessages, setAiMessages] = useState([
         { text: "Xin chào! Tôi là trợ lý ảo AI. Bạn cần tìm mẫu giày hay trang phục nào hôm nay?", isBot: true }
     ]);
     const [liveMessages, setLiveMessages] = useState([]);
-    
+
     const { user } = useAuth();
     const scrollRef = useRef(null);
     const stompClient = useRef(null);
     const subscriptionRef = useRef(null);
+    const isConnecting = useRef(false); // ← guard chống double-connect
     const userId = useRef(user?.id?.toString() || localStorage.getItem('chat_session_id') || Math.random().toString(36).substring(7));
 
+    // Chỉ khởi tạo session ID, KHÔNG connect WebSocket ở đây
     useEffect(() => {
         if (!localStorage.getItem('chat_session_id')) {
             localStorage.setItem('chat_session_id', userId.current);
         }
-        connectWebSocket();
-        fetchHistory();
         return () => disconnectWebSocket();
     }, []);
+
+    // Chỉ connect WebSocket khi user mở tab 'live'
+    useEffect(() => {
+        if (activeTab === 'live') {
+            fetchHistory();
+            connectWebSocket();
+        }
+    }, [activeTab]);
 
     const fetchHistory = async () => {
         try {
@@ -48,13 +56,18 @@ const SupportCenter = () => {
     };
 
     const connectWebSocket = () => {
-        if (stompClient.current?.connected) return;
+        if (isConnecting.current || stompClient.current?.connected) return;
+        isConnecting.current = true;
+
         const socket = new SockJS('http://localhost:8081/ws-chat');
-        stompClient.current = Stomp.over(socket);
-        stompClient.current.debug = null;
-        stompClient.current.connect({}, () => {
+        const client = Stomp.over(socket);
+        client.debug = null;
+        stompClient.current = client;
+
+        client.connect({}, () => {
+            isConnecting.current = false;
             if (subscriptionRef.current) subscriptionRef.current.unsubscribe();
-            subscriptionRef.current = stompClient.current.subscribe(`/user/${userId.current}/queue/messages`, (message) => {
+            subscriptionRef.current = client.subscribe(`/user/${userId.current}/queue/messages`, (message) => {
                 const chatMsg = JSON.parse(message.body);
                 if (chatMsg.type === 'TYPING') {
                     setIsTyping(true);
@@ -68,12 +81,17 @@ const SupportCenter = () => {
                     setIsTyping(false);
                 }
             });
+        }, (error) => {
+            isConnecting.current = false;
+            console.error('SupportCenter STOMP error:', error);
         });
     };
 
     const disconnectWebSocket = () => {
         if (subscriptionRef.current) subscriptionRef.current.unsubscribe();
         if (stompClient.current?.connected) stompClient.current.disconnect();
+        stompClient.current = null;
+        isConnecting.current = false;
     };
 
     useEffect(() => {
@@ -88,7 +106,6 @@ const SupportCenter = () => {
         setLoading(true);
 
         try {
-            // Nếu có ảnh, upload trước
             if (previewImage) {
                 setUploadingImage(true);
                 const formData = new FormData();
@@ -116,6 +133,9 @@ const SupportCenter = () => {
                         content: finalContent,
                         type: 'CHAT'
                     }));
+                } else {
+                    // Thử reconnect nếu mất kết nối
+                    connectWebSocket();
                 }
             }
         } catch (err) {
@@ -128,26 +148,22 @@ const SupportCenter = () => {
     const handleFileSelect = (e) => {
         const file = e.target.files[0];
         if (file) {
-            setPreviewImage({
-                file: file,
-                url: URL.createObjectURL(file)
-            });
+            setPreviewImage({ file, url: URL.createObjectURL(file) });
         }
     };
 
-    const renderMessageContent = (msg, isBot) => {
+    const renderMessageContent = (msg) => {
         const isImage = msg.text?.startsWith('[IMAGE]');
         if (isImage) {
             const parts = msg.text.replace('[IMAGE]', '').split('|');
             const imageUrl = parts[0];
             const caption = parts[1] || "";
             const fullImageUrl = imageUrl.startsWith('http') ? imageUrl : `http://localhost:8081${imageUrl}`;
-
             return (
                 <div className="d-flex flex-column gap-2">
-                    <img 
-                        src={fullImageUrl} 
-                        alt="Chat" 
+                    <img
+                        src={fullImageUrl}
+                        alt="Chat"
                         className="rounded-3 img-fluid shadow-sm"
                         style={{ maxWidth: '100%', cursor: 'pointer', display: 'block' }}
                         onClick={() => window.open(fullImageUrl, '_blank')}
@@ -176,7 +192,7 @@ const SupportCenter = () => {
                                         {activeTab === 'menu' ? 'Trung tâm hỗ trợ' : activeTab === 'ai' ? 'Trợ lý AI Gemini' : 'Chat với tư vấn viên'}
                                     </h6>
                                     <div className="small opacity-75 d-flex align-items-center gap-1">
-                                        <div className="bg-success rounded-circle" style={{width: '6px', height: '6px'}}></div> Sẵn sàng hỗ trợ
+                                        <div className="bg-success rounded-circle" style={{ width: '6px', height: '6px' }}></div> Sẵn sàng hỗ trợ
                                     </div>
                                 </div>
                             </div>
@@ -206,7 +222,7 @@ const SupportCenter = () => {
                                     </div>
                                 </button>
                                 <div className="mt-auto text-center py-3 border-top">
-                                    <span className="text-muted smaller"><Clock size={12} className="me-1"/> Phản hồi trong vài phút</span>
+                                    <span className="text-muted smaller"><Clock size={12} className="me-1" /> Phản hồi trong vài phút</span>
                                 </div>
                             </div>
                         ) : (
@@ -214,21 +230,19 @@ const SupportCenter = () => {
                                 <div className="chat-body p-3 flex-grow-1 overflow-auto bg-light d-flex flex-column gap-3" ref={scrollRef}>
                                     {(activeTab === 'ai' ? aiMessages : liveMessages).map((m, i) => (
                                         <div key={i} className={`msg-group ${m.isBot ? 'bot' : 'user'}`}>
-                                            <div className="msg-bubble shadow-sm">
-                                                {renderMessageContent(m, m.isBot)}
-                                            </div>
-                                            <span className="msg-time">{new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                                            <div className="msg-bubble shadow-sm">{renderMessageContent(m)}</div>
+                                            <span className="msg-time">{new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                         </div>
                                     ))}
                                     {loading && activeTab === 'ai' && <div className="msg-group bot"><div className="msg-bubble typing-dots"><span></span><span></span><span></span></div></div>}
                                     {isTyping && activeTab === 'live' && <div className="msg-group bot"><div className="msg-bubble text-muted smaller">Đang trả lời...</div></div>}
                                 </div>
-                                
+
                                 <div className="chat-input-area p-3 border-top">
                                     {previewImage && (
                                         <div className="image-preview-container mb-2 p-2 bg-light rounded-3 position-relative d-inline-block">
                                             <img src={previewImage.url} alt="Preview" className="rounded-2" style={{ height: '60px', width: '60px', objectFit: 'cover' }} />
-                                            <button className="btn-close-preview shadow-sm" onClick={() => setPreviewImage(null)}><X size={12}/></button>
+                                            <button className="btn-close-preview shadow-sm" onClick={() => setPreviewImage(null)}><X size={12} /></button>
                                         </div>
                                     )}
                                     <form className="d-flex align-items-center gap-2" onSubmit={handleSend}>
@@ -238,15 +252,15 @@ const SupportCenter = () => {
                                                 <input type="file" hidden accept="image/*" onChange={handleFileSelect} />
                                             </label>
                                         )}
-                                        <input 
-                                            type="text" 
-                                            className="form-control chat-input" 
-                                            placeholder="Nhập nội dung..." 
-                                            value={input} 
-                                            onChange={e => setInput(e.target.value)} 
+                                        <input
+                                            type="text"
+                                            className="form-control chat-input"
+                                            placeholder="Nhập nội dung..."
+                                            value={input}
+                                            onChange={e => setInput(e.target.value)}
                                         />
                                         <button type="submit" className="btn btn-primary send-btn" disabled={loading}>
-                                            {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18}/>}
+                                            {loading ? <Loader2 size={18} className="animate-spin" /> : <Send size={18} />}
                                         </button>
                                     </form>
                                 </div>

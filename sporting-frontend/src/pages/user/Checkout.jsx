@@ -10,6 +10,7 @@ import {
   FaChevronDown
 } from 'react-icons/fa';
 import './Checkout.css';
+import OrderSuccess from './OrderSuccess';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
@@ -199,27 +200,8 @@ const Checkout = () => {
   };
 
   if (orderResponse) {
-    return (
-      <div className="container py-5 text-center">
-        <div className="luxury-card p-5 mx-auto" style={{maxWidth: '600px'}}>
-          <FaCheckCircle className="text-success display-1 mb-4" />
-          <h2 className="fw-black text-dark mb-2">ĐẶT HÀNG THÀNH CÔNG!</h2>
-          <p className="text-muted mb-4">Cảm ơn bạn đã tin dùng Sporting Shop. Mã đơn hàng của bạn là <b>#ORD-{orderResponse.id}</b></p>
-          <div className="bg-light p-4 rounded-4 mb-4 text-start">
-              <div className="d-flex justify-content-between mb-2">
-                  <span className="text-muted">Tổng thanh toán:</span>
-                  <span className="fw-black text-danger h5 mb-0">{orderResponse.total?.toLocaleString()}đ</span>
-              </div>
-              <div className="d-flex justify-content-between">
-                  <span className="text-muted">Trạng thái:</span>
-                  <span className="badge bg-warning text-dark px-3">CHỜ XÁC NHẬN</span>
-              </div>
-          </div>
-          <button className="luxury-button w-100 py-3" onClick={() => navigate('/')}>TIẾP TỤC KHÁM PHÁ</button>
-        </div>
-      </div>
-    );
-  }
+  return <OrderSuccess order={orderResponse} />;
+}
 
   return (
     <div className="checkout-page bg-white min-vh-100 py-5" style={{fontFamily: '"Inter", sans-serif'}}>
