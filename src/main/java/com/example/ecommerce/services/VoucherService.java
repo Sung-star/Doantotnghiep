@@ -1,6 +1,9 @@
 package com.example.ecommerce.services;
 
+import java.time.Instant;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import org.springframework.beans.factory.annotation.Autowired;
@@ -49,11 +52,30 @@ public class VoucherService {
     public Voucher insert(Voucher obj) {
         Voucher saved = repository.save(obj);
 
-        // Gửi WebSocket NGAY trên main thread — không để lỗi email chặn
+        // Gửi WebSocket thông báo
         try {
-            System.out.println(">>> [WS] Chuẩn bị gửi notification cho voucher: " + saved.getCode());
-            messagingTemplate.convertAndSend("/topic/public-notifications", saved);
-            System.out.println(">>> [WS] Gửi thành công!");
+            if (Boolean.TRUE.equals(saved.getAssignedToAll())) {
+                // Voucher public → gửi cho tất cả user qua topic public
+                messagingTemplate.convertAndSend("/topic/public-notifications", saved);
+                System.out.println(">>> [WS] Gửi voucher public: " + saved.getCode());
+            } else {
+                // Voucher riêng tư → chỉ gửi cho các user được gán
+                if (saved.getAssignedUsers() != null) {
+                    for (var user : saved.getAssignedUsers()) {
+                        Map<String, Object> notification = new HashMap<>();
+                        notification.put("type", "VOUCHER_PERSONAL");
+                        notification.put("id", "voucher-" + saved.getId() + "-" + System.currentTimeMillis());
+                        notification.put("code", saved.getCode());
+                        notification.put("discountPercent", saved.getDiscountPercent());
+                        notification.put("description", saved.getDescription() != null ? saved.getDescription() : "");
+                        notification.put("title", "🎁 Voucher riêng cho bạn!");
+                        notification.put("message", "Bạn vừa nhận được voucher \"" + saved.getCode() + "\" giảm " + saved.getDiscountPercent().intValue() + "% dành riêng!");
+                        notification.put("timestamp", Instant.now().toString());
+                        messagingTemplate.convertAndSend("/topic/user-" + user.getId(), notification);
+                        System.out.println(">>> [WS] Gửi voucher riêng cho user-" + user.getId());
+                    }
+                }
+            }
         } catch (Exception e) {
             System.err.println(">>> [WS] Lỗi gửi WebSocket: " + e.getMessage());
         }

@@ -58,8 +58,10 @@ class OrderResourceTest {
         testOrderDTO = new OrderDTO();
         testOrderDTO.setClientId(1L);
         testOrderDTO.setShippingName("Test User");
+        testOrderDTO.setShippingEmail("test-order@example.com");
         testOrderDTO.setShippingPhone("0123456789");
         testOrderDTO.setShippingAddress("123 Street");
+        testOrderDTO.setItems(new ArrayList<>());
     }
 
     @Test
@@ -80,7 +82,7 @@ class OrderResourceTest {
     @DisplayName("Should return 404 when order not found")
     void testGetOrderNotFound() throws Exception {
         // Arrange
-        when(orderService.findById(999L)).thenThrow(new RuntimeException("Order not found"));
+        when(orderService.findById(999L)).thenThrow(new com.example.ecommerce.services.exceptions.ResourceNotFoundException("Order not found"));
 
         // Act & Assert
         mockMvc.perform(get("/api/orders/999")
@@ -150,7 +152,7 @@ class OrderResourceTest {
         mockMvc.perform(post("/api/orders")
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(invalidOrder))
-            .andExpect(status().isBadRequest());
+            .andExpect(status().isUnprocessableEntity());
     }
 
     @Test
@@ -176,7 +178,7 @@ class OrderResourceTest {
             .andExpect(status().isOk())
             .andExpect(jsonPath("$.id").exists())
             .andExpect(jsonPath("$.orderStatus").exists())
-            .andExpect(jsonPath("$.orderDate").exists());
+            .andExpect(jsonPath("$.moment").exists());
     }
 
     @Test

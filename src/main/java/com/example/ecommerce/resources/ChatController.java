@@ -1,19 +1,23 @@
 package com.example.ecommerce.resources;
 
-import com.example.ecommerce.entities.ChatMessage;
-import com.example.ecommerce.repositories.ChatMessageRepository;
-import com.example.ecommerce.repositories.UserRepository;
-import com.example.ecommerce.entities.User;
+import java.time.Instant;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.messaging.handler.annotation.MessageMapping;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.RestController;
 
-import java.util.List;
-import java.util.Map;
-import java.util.HashMap;
-import java.util.stream.Collectors;
+import com.example.ecommerce.entities.ChatMessage;
+import com.example.ecommerce.entities.User;
+import com.example.ecommerce.repositories.ChatMessageRepository;
+import com.example.ecommerce.repositories.UserRepository;
 
 @RestController
 public class ChatController {
@@ -50,6 +54,28 @@ public class ChatController {
             // hoặc nếu recipient là admin, thì LUÔN gửi vào /topic/admin để Admin Panel cập nhật ngay
             if ("admin".equals(chatMsgDto.getRecipientId()) || !"admin".equals(chatMsgDto.getSenderId())) {
                 messagingTemplate.convertAndSend("/topic/admin", chatMsgDto);
+            }
+            
+            // 🔔 GỬI THÔNG BÁO CHO NGƯỜI DÙNG KHI ADMIN GỬI TIN NHẮN
+            if ("admin".equals(chatMsgDto.getSenderId()) && !chatMsgDto.getRecipientId().equals("admin")) {
+                try {
+                    Map<String, Object> notification = new HashMap<>();
+                    notification.put("type", "CHAT");
+                    notification.put("id", "chat-" + System.currentTimeMillis() + "-" + chatMsgDto.getRecipientId());
+                    notification.put("title", "💬 Tin nhắn từ hỗ trợ");
+                    notification.put("message", chatMsgDto.getContent());
+                    notification.put("timestamp", Instant.now().toString());
+                    notification.put("read", false);
+                    
+                    // Gửi notification vào kênh của user
+                    messagingTemplate.convertAndSend(
+                        "/topic/user-" + chatMsgDto.getRecipientId(), 
+                        notification
+                    );
+                    System.out.println(">>> [NOTIF] Gửi notification chat từ admin tới user-" + chatMsgDto.getRecipientId());
+                } catch (Exception e) {
+                    System.err.println(">>> [NOTIF] Lỗi gửi notification chat: " + e.getMessage());
+                }
             }
         }
     }

@@ -23,8 +23,8 @@ const ContactPage = () => {
     {
       icon: <MapPin size={22} />,
       label: 'ĐỊA CHỈ',
-      value: '123 Nguyễn Huệ, Quận 1',
-      sub: 'TP. Hồ Chí Minh, Việt Nam',
+      value: '123 Lê Văn Việt, Phường Tăng Nhơn Phú B, Quận 9',
+      sub: 'TP. Thủ Đức',
     },
     {
       icon: <Phone size={22} />,

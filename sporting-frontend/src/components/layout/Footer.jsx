@@ -134,7 +134,7 @@ const Footer = () => {
                 <div className="bg-secondary bg-opacity-25 rounded p-2 text-primary">
                   <MapPin size={20} />
                 </div>
-                <span className="text-secondary small">123 Lê Văn Việt, Phường Tăng Nhơn Phú B, Quận 9, TP. Hồ Chí Minh</span>
+                <span className="text-secondary small">123 Lê Văn Việt, Phường Tăng Nhơn Phú B, Quận 9, TP. Thủ Đức</span>
               </div>
               <div className="d-flex align-items-center gap-3">
                 <div className="bg-secondary bg-opacity-25 rounded p-2 text-primary">

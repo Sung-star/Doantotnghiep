@@ -81,7 +81,10 @@ public class EmailService {
             "</div>" +
             "</body></html>";
 
-        sendHtmlEmail(order.getClient().getEmail(), subject, htmlBody);
+        String recipient = order.getShippingEmail() != null && !order.getShippingEmail().isBlank()
+                ? order.getShippingEmail()
+                : order.getClient().getEmail();
+        sendHtmlEmail(recipient, subject, htmlBody);
     }
 
     public void sendStatusUpdate(Order order) {
@@ -102,7 +105,10 @@ public class EmailService {
             "</div>" +
             "</body></html>";
 
-        sendHtmlEmail(order.getClient().getEmail(), subject, htmlBody);
+        String recipient = order.getShippingEmail() != null && !order.getShippingEmail().isBlank()
+                ? order.getShippingEmail()
+                : order.getClient().getEmail();
+        sendHtmlEmail(recipient, subject, htmlBody);
     }
 
     public void sendNewVoucherNotification(String email, Voucher voucher) {
@@ -119,5 +125,25 @@ public class EmailService {
             "</div>" +
             "</body></html>";
         sendHtmlEmail(email, subject, htmlBody);
+    }
+
+    public void sendLowStockWarning(com.example.ecommerce.entities.Product product, com.example.ecommerce.entities.ProductVariant variant, com.example.ecommerce.entities.ProductSize size) {
+        String adminEmail = "admin@sportingshop.com"; // Địa chỉ email của người quản lý kho/shop
+        String subject = "⚠️ CẢNH BÁO: SẢN PHẨM SẮP HẾT HÀNG!";
+        String htmlBody = "<html><body style='font-family: Arial, sans-serif;'>" +
+            "<div style='max-width: 600px; margin: 0 auto; border: 2px solid #d9534f; padding: 20px;'>" +
+            "  <h2 style='color: #d9534f; text-align: center;'>CẢNH BÁO SẢP HẾT HÀNG</h2>" +
+            "  <p>Hệ thống thông báo sản phẩm sau đây đã giảm xuống dưới mức cảnh báo tồn kho (<= 5):</p>" +
+            "  <ul>" +
+            "    <li><strong>Sản phẩm:</strong> " + product.getName() + "</li>" +
+            "    <li><strong>Màu sắc:</strong> " + variant.getColor() + "</li>" +
+            "    <li><strong>Size:</strong> " + size.getSize() + "</li>" +
+            "    <li><strong style='color: red;'>Tồn kho hiện tại: " + size.getQuantity() + "</strong></li>" +
+            "  </ul>" +
+            "  <p>Vui lòng kiểm tra và nhập thêm hàng trong thời gian sớm nhất.</p>" +
+            "</div>" +
+            "</body></html>";
+        
+        sendHtmlEmail(adminEmail, subject, htmlBody);
     }
 }

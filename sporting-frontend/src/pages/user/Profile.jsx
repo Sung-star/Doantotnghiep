@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../api/axiosConfig';
-import { Camera, User, Phone, Mail, Shield, Save, ArrowLeft, Ticket } from 'lucide-react';
+import { Camera, User, Phone, Mail, Shield, Save, ArrowLeft, Ticket, Crown } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { FaMapMarkerAlt, FaCopy } from 'react-icons/fa';
 
@@ -170,6 +170,9 @@ const Profile = () => {
                     </button>
                     <button onClick={() => setActiveTab('vouchers')} className={`px-4 py-2 rounded-3 border-0 fw-bold transition-all d-flex align-items-center gap-2 ${activeTab === 'vouchers' ? 'bg-dark text-white' : 'bg-transparent text-muted'}`}>
                         <Ticket size={18} /> VÍ VOUCHER ({vouchers.length})
+                    </button>
+                    <button onClick={() => navigate('/loyalty')} className="px-4 py-2 rounded-3 border-0 fw-bold transition-all d-flex align-items-center gap-2 bg-transparent" style={{ color: '#f59e0b' }}>
+                        <Crown size={18} /> ĐIỂM THƯỞNG
                     </button>
                 </div>
             </div>

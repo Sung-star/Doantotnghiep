@@ -3,7 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import {
   ShoppingCart, User, ShoppingBag, Search, Menu, X,
   LogOut, Package, LogIn, UserPlus, ShieldCheck, ChevronDown,
-  Heart, Sun, Moon, Phone, Tag
+  Heart, Sun, Moon, Phone, Tag, Crown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
@@ -258,6 +258,11 @@ const Navbar = () => {
                     <li>
                       <Link className="dropdown-item luxury-dropdown-item" to="/vouchers">
                         <Tag size={18} className="me-3" /> Voucher của tôi
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item luxury-dropdown-item" to="/loyalty" style={{ color: '#f59e0b', fontWeight: 700 }}>
+                        <Crown size={18} className="me-3" /> Điểm thưởng & Hạng
                       </Link>
                     </li>
                     {user.roles && user.roles.some(r => (r.authority === 'ROLE_ADMIN' || r.name === 'ROLE_ADMIN')) && (

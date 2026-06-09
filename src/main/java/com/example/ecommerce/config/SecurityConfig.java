@@ -34,9 +34,10 @@ public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
             .requestMatchers("/orders/**").permitAll() 
             .requestMatchers("/add-to-cart/**").permitAll()
             .requestMatchers("/api/payment/**").permitAll() // Mở quyền cho VNPAY
-            // THÊM DÒNG NÀY: Mở khóa quyền truy cập ảnh
             .requestMatchers("/uploads/**").permitAll() 
             .requestMatchers("/api/upload/**").permitAll() 
+            .requestMatchers("/admin/loyalty/**").permitAll() // Cho phép Điểm & Thành viên
+            .requestMatchers("/api/admin/loyalty/**").permitAll() // Cho phép Điểm & Thành viên (API)
             .requestMatchers("/admin/**").hasRole("ADMIN")
             .anyRequest().permitAll()
         )

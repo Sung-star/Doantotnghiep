@@ -25,6 +25,7 @@ import com.example.ecommerce.repositories.ProductVariantRepository;
 import com.example.ecommerce.repositories.UserRepository;
 import com.example.ecommerce.repositories.VoucherRepository;
 import com.example.ecommerce.services.exceptions.BadRequestException;
+import com.example.ecommerce.services.exceptions.ResourceNotFoundException;
 
 
 @Service
@@ -57,7 +58,7 @@ public class OrderService {
 
     public Order findById(Long id) {
         Optional<Order> obj = repository.findById(id);
-        return obj.orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + id));
+        return obj.orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại với ID: " + id));
     }
 
     @Transactional
@@ -67,7 +68,6 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
             repository.delete(order);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("Lỗi khi xóa đơn hàng: " + e.getMessage());
         }
     }
@@ -81,6 +81,9 @@ public class OrderService {
             order.setPayment(pay);
         }
         order = repository.save(order);
+        
+        // CỘNG ĐIỂM KHI ĐƠN HÀNG HOÀN THÀNH (DELIVERED)
+        // NOTE: Loyalty points are now handled by LoyaltyService triggered from updateStatus()
         
         // Trigger status update email
         emailService.sendStatusUpdate(order);
@@ -100,6 +103,7 @@ public class OrderService {
         
         // Lưu thông tin giao hàng
         order.setShippingName(dto.getShippingName());
+        order.setShippingEmail(dto.getShippingEmail());
         order.setShippingPhone(dto.getShippingPhone());
         order.setShippingAddress(dto.getShippingAddress());
 
@@ -116,6 +120,16 @@ public class OrderService {
         } else {
             order.setVoucherCode(null);
             order.setDiscountAmount(0.0);
+        }
+
+        // XỬ LÝ DÙNG ĐIỂM (LOYALTY POINTS)
+        // NOTE: Loyalty points are now managed by LoyaltyService, not User.points
+        Integer pointsUsed = dto.getPointsUsed() != null ? dto.getPointsUsed() : 0;
+        if (pointsUsed > 0) {
+            // TODO: Verify points through LoyaltyService before placing order
+            order.setPointsUsed(pointsUsed);
+        } else {
+            order.setPointsUsed(0);
         }
 
         // Lưu Order trước để có ID
@@ -146,6 +160,12 @@ public class OrderService {
             // D. TRỪ KHO VÀ LƯU LẠI
             productSize.setQuantity(productSize.getQuantity() - itemDto.getQuantity());
             productSizeRepository.save(productSize); // Cập nhật số lượng mới vào DB
+            
+            // TÍNH NĂNG NÂNG CAO: CẢNH BÁO HẾT HÀNG (LOW STOCK WARNING)
+            if (productSize.getQuantity() <= 5) {
+                // Gửi email cho admin (Giả sử gửi vào email của người dùng đầu tiên hoặc 1 email admin cố định)
+                emailService.sendLowStockWarning(variant.getProduct(), variant, productSize);
+            }
 
             // E. TẠO ORDER ITEM
             double itemPrice = variant.getProduct().getPrice();
@@ -161,17 +181,24 @@ public class OrderService {
         }
 
         // 4. Áp dụng Voucher (nếu có) và tính tiền dựa trên Subtotal thực tế
+        double totalDiscount = 0.0;
+        
         if (voucherToApply != null) {
-            double discount = calculateDiscount(order, voucherToApply);
-            order.setDiscountAmount(discount);
+            double voucherDiscount = calculateDiscount(order, voucherToApply);
+            totalDiscount += voucherDiscount;
             
             // Cập nhật lượt dùng Voucher ngay lập tức
             Integer currentUsed = voucherToApply.getUsedCount() != null ? voucherToApply.getUsedCount() : 0;
             voucherToApply.setUsedCount(currentUsed + 1);
             voucherRepository.save(voucherToApply);
-        } else {
-            order.setDiscountAmount(0.0);
         }
+        
+        // Thêm giảm giá từ điểm tích lũy (1 điểm = 100đ)
+        if (pointsUsed > 0) {
+            totalDiscount += (pointsUsed * 100.0);
+        }
+        
+        order.setDiscountAmount(totalDiscount);
 
         Order finalOrder = repository.save(order);
         

@@ -1,18 +1,18 @@
 import { Link } from 'react-router-dom';
-import { 
-  RotateCcw, CheckCircle, XCircle, Clock, Package, 
+import {
+  RotateCcw, CheckCircle, XCircle, Clock, Package,
   ChevronRight, Phone, Mail, AlertTriangle, RefreshCw
 } from 'lucide-react';
 import './SupportPage.css';
 
 const ReturnPolicy = () => {
   const conditions = [
-    { icon: <CheckCircle size={18}/>, text: 'Sản phẩm còn nguyên tem, nhãn mác, chưa qua sử dụng' },
-    { icon: <CheckCircle size={18}/>, text: 'Còn đầy đủ bao bì, hộp đựng gốc của sản phẩm' },
-    { icon: <CheckCircle size={18}/>, text: 'Có hóa đơn mua hàng hoặc mã đơn hàng' },
-    { icon: <CheckCircle size={18}/>, text: 'Trong vòng 30 ngày kể từ ngày nhận hàng' },
-    { icon: <XCircle size={18}/>, text: 'Không áp dụng với sản phẩm giảm giá trên 50%' },
-    { icon: <XCircle size={18}/>, text: 'Không áp dụng với đồ lót, tất và phụ kiện cá nhân' },
+    { icon: <CheckCircle size={18} />, text: 'Sản phẩm còn nguyên tem, nhãn mác, chưa qua sử dụng' },
+    { icon: <CheckCircle size={18} />, text: 'Còn đầy đủ bao bì, hộp đựng gốc của sản phẩm' },
+    { icon: <CheckCircle size={18} />, text: 'Có hóa đơn mua hàng hoặc mã đơn hàng' },
+    { icon: <CheckCircle size={18} />, text: 'Trong vòng 30 ngày kể từ ngày nhận hàng' },
+    { icon: <XCircle size={18} />, text: 'Không áp dụng với sản phẩm giảm giá trên 50%' },
+    { icon: <XCircle size={18} />, text: 'Không áp dụng với đồ lót, tất và phụ kiện cá nhân' },
   ];
 
   const steps = [
@@ -52,7 +52,7 @@ const ReturnPolicy = () => {
               {/* Điều kiện */}
               <div className="support-card">
                 <div className="d-flex align-items-center gap-3 mb-4">
-                  <div className="support-card-icon blue"><CheckCircle size={22}/></div>
+                  <div className="support-card-icon blue"><CheckCircle size={22} /></div>
                   <div>
                     <div className="section-label">Điều kiện áp dụng</div>
                     <h4 className="mb-0">Sản phẩm đủ điều kiện đổi/trả</h4>
@@ -73,7 +73,7 @@ const ReturnPolicy = () => {
               {/* Quy trình */}
               <div className="support-card">
                 <div className="d-flex align-items-center gap-3 mb-4">
-                  <div className="support-card-icon purple"><RefreshCw size={22}/></div>
+                  <div className="support-card-icon purple"><RefreshCw size={22} /></div>
                   <div>
                     <div className="section-label">Quy trình</div>
                     <h4 className="mb-0">Các bước đổi/trả hàng</h4>
@@ -92,7 +92,7 @@ const ReturnPolicy = () => {
               {/* Thời gian hoàn tiền */}
               <div className="support-card">
                 <div className="d-flex align-items-center gap-3 mb-4">
-                  <div className="support-card-icon orange"><Clock size={22}/></div>
+                  <div className="support-card-icon orange"><Clock size={22} /></div>
                   <div>
                     <div className="section-label">Thời gian</div>
                     <h4 className="mb-0">Thời gian xử lý hoàn tiền</h4>
@@ -128,14 +128,14 @@ const ReturnPolicy = () => {
                   <p className="mb-4">Đội ngũ CSKH sẵn sàng hỗ trợ bạn 24/7. Liên hệ ngay để được giải đáp nhanh nhất.</p>
                   <div className="d-flex flex-column gap-3">
                     <div className="contact-chip">
-                      <div className="contact-chip-icon"><Phone size={18}/></div>
+                      <div className="contact-chip-icon"><Phone size={18} /></div>
                       <div>
                         <div className="contact-chip-label">Hotline miễn phí</div>
                         <div className="contact-chip-value">1900 1234</div>
                       </div>
                     </div>
                     <div className="contact-chip">
-                      <div className="contact-chip-icon"><Mail size={18}/></div>
+                      <div className="contact-chip-icon"><Mail size={18} /></div>
                       <div>
                         <div className="contact-chip-label">Email hỗ trợ</div>
                         <div className="contact-chip-value">hotro@sportingshop.com</div>
@@ -146,9 +146,9 @@ const ReturnPolicy = () => {
               </div>
 
               <div className="support-card">
-                <div className="support-card-icon green mb-3"><Package size={22}/></div>
+                <div className="support-card-icon green mb-3"><Package size={22} /></div>
                 <h4>Địa chỉ gửi hàng hoàn trả</h4>
-                <p className="mb-0">Kho hàng SportingShop<br/>123 Lê Văn Việt, P. Tăng Nhơn Phú B,<br/>Quận 9, TP. Hồ Chí Minh</p>
+                <p className="mb-0">Kho hàng SportingShop<br />123 Lê Văn Việt, P. Tăng Nhơn Phú B,<br />Quận 9, TP. Thủ Đức</p>
                 <div className="highlight-box mt-3">
                   <h6>📦 Ghi chú khi gửi hàng</h6>
                   <p>Ghi rõ mã đơn hàng và số điện thoại lên bên ngoài hộp để chúng tôi xử lý nhanh hơn.</p>

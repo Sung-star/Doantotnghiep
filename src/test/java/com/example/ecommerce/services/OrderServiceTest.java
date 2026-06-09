@@ -86,6 +86,7 @@ class OrderServiceTest {
         testOrderDTO = new OrderDTO();
         testOrderDTO.setClientId(1L);
         testOrderDTO.setShippingName("Shipping Name");
+        testOrderDTO.setShippingEmail("test-order@example.com");
         testOrderDTO.setShippingPhone("0123456789");
         testOrderDTO.setShippingAddress("123 Street");
         testOrderDTO.setItems(new ArrayList<>());
@@ -216,7 +217,7 @@ class OrderServiceTest {
         when(productSizeRepository.save(any())).thenReturn(size);
         when(orderRepository.save(any())).thenReturn(testOrder);
         when(orderItemRepository.save(any())).thenReturn(new OrderItem());
-        doNothing().when(emailService).sendStatusUpdate(any());
+        doNothing().when(emailService).sendOrderConfirmation(any());
 
         // Act
         Order result = orderService.placeOrder(testOrderDTO);

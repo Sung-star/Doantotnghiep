@@ -10,19 +10,21 @@ import {
   FaChevronDown
 } from 'react-icons/fa';
 import './Checkout.css';
-import OrderSuccess from './OrderSuccess';
 
 const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
   const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsUsed, setPointsUsed] = useState(0);
 
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
   
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.name || '',
+    email: user?.email || '',
     phone: user?.phone || '',
     address: ''
   });
@@ -157,20 +159,37 @@ const Checkout = () => {
   };
 
   const discountAmount = calculateDiscountAmount();
-  const finalTotal = subtotal + shippingFee - discountAmount;
+  
+  // Tính điểm sử dụng (tối đa bằng số tiền đơn hàng hoặc số điểm hiện có)
+  useEffect(() => {
+    if (usePoints && user?.points > 0) {
+      // 1 điểm = 100đ. Tối đa dùng điểm sao cho tiền giảm <= subtotal - discountAmount + shippingFee
+      const maxPointsNeeded = Math.floor((subtotal - discountAmount + shippingFee) / 100);
+      const pointsToUse = Math.min(user.points, maxPointsNeeded);
+      setPointsUsed(pointsToUse > 0 ? pointsToUse : 0);
+    } else {
+      setPointsUsed(0);
+    }
+  }, [usePoints, user?.points, subtotal, discountAmount, shippingFee]);
+
+  const pointsDiscountAmount = pointsUsed * 100;
+  const finalTotal = subtotal + shippingFee - discountAmount - pointsDiscountAmount;
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     if (!user) return alert("Vui lòng đăng nhập!");
+    if (!shippingInfo.email) return alert("Vui lòng nhập email liên hệ!");
     if (!shippingInfo.address) return alert("Vui lòng nhập địa chỉ giao hàng!");
 
     setLoading(true);
-    const orderDto = { // orderData was a floating snippet, now correctly defined as orderDto
+    const orderDto = {
       clientId: user.id,
       shippingName: shippingInfo.fullName,
+      shippingEmail: shippingInfo.email,
       shippingPhone: shippingInfo.phone,
       shippingAddress: shippingInfo.address,
-      voucherCode: selectedVoucher ? selectedVoucher.code : null, // Sử dụng mã từ selectedVoucher
+      voucherCode: selectedVoucher ? selectedVoucher.code : null,
+      pointsUsed: pointsUsed,
       items: cartItems.map(item => ({
         productId: item.id,
         quantity: item.quantity,
@@ -200,8 +219,27 @@ const Checkout = () => {
   };
 
   if (orderResponse) {
-  return <OrderSuccess order={orderResponse} />;
-}
+    return (
+      <div className="container py-5 text-center">
+        <div className="luxury-card p-5 mx-auto" style={{maxWidth: '600px'}}>
+          <FaCheckCircle className="text-success display-1 mb-4" />
+          <h2 className="fw-black text-dark mb-2">ĐẶT HÀNG THÀNH CÔNG!</h2>
+          <p className="text-muted mb-4">Cảm ơn bạn đã tin dùng Sporting Shop. Mã đơn hàng của bạn là <b>#ORD-{orderResponse.id}</b></p>
+          <div className="bg-light p-4 rounded-4 mb-4 text-start">
+              <div className="d-flex justify-content-between mb-2">
+                  <span className="text-muted">Tổng thanh toán:</span>
+                  <span className="fw-black text-danger h5 mb-0">{orderResponse.total?.toLocaleString()}đ</span>
+              </div>
+              <div className="d-flex justify-content-between">
+                  <span className="text-muted">Trạng thái:</span>
+                  <span className="badge bg-warning text-dark px-3">CHỜ XÁC NHẬN</span>
+              </div>
+          </div>
+          <button className="luxury-button w-100 py-3" onClick={() => navigate('/')}>TIẾP TỤC KHÁM PHÁ</button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="checkout-page bg-white min-vh-100 py-5" style={{fontFamily: '"Inter", sans-serif'}}>
@@ -241,6 +279,11 @@ const Checkout = () => {
                 <label className="fw-bold small text-muted text-uppercase mb-2">Họ và tên người nhận</label>
                 <input type="text" className="luxury-input w-100" value={shippingInfo.fullName} 
                     onChange={e => setShippingInfo({...shippingInfo, fullName: e.target.value})} />
+              </div>
+              <div className="col-md-6">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Email liên hệ</label>
+                <input type="email" className="luxury-input w-100" value={shippingInfo.email}
+                    onChange={e => setShippingInfo({...shippingInfo, email: e.target.value})} />
               </div>
               <div className="col-md-6">
                 <label className="fw-bold small text-muted text-uppercase mb-2">Số điện thoại</label>
@@ -333,6 +376,22 @@ const Checkout = () => {
                         />
                     </div>
 
+                    {/* Loyalty Points Section */}
+                    {user?.points > 0 && (
+                        <div className="mb-4 p-3 border rounded-3 bg-light">
+                            <div className="form-check form-switch d-flex align-items-center justify-content-between p-0">
+                                <div>
+                                    <label className="form-check-label fw-bold" htmlFor="usePointsSwitch">
+                                        Dùng điểm tích lũy
+                                    </label>
+                                    <small className="d-block text-muted">Bạn có <strong className="text-warning">{user.points.toLocaleString()}</strong> điểm</small>
+                                </div>
+                                <input className="form-check-input ms-3 mt-0" type="checkbox" role="switch" id="usePointsSwitch" style={{width: '40px', height: '20px'}}
+                                    checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
+                            </div>
+                        </div>
+                    )}
+
                     <div className="space-y-3 mb-4">
                         <div className="d-flex justify-content-between text-muted">
                             <span>Tạm tính:</span>
@@ -346,6 +405,12 @@ const Checkout = () => {
                             <div className="d-flex justify-content-between text-danger">
                                 <span>Giảm giá ({selectedVoucher.code}):</span>
                                 <span className="fw-bold">-{discountAmount.toLocaleString()}đ</span>
+                            </div>
+                        )}
+                        {pointsDiscountAmount > 0 && (
+                            <div className="d-flex justify-content-between text-warning">
+                                <span>Trừ điểm ({pointsUsed} điểm):</span>
+                                <span className="fw-bold">-{pointsDiscountAmount.toLocaleString()}đ</span>
                             </div>
                         )}
                         <hr className="my-3 border-light" />

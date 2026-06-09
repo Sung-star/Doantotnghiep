@@ -26,6 +26,7 @@ const Checkout = lazy(() => import('./pages/user/Checkout'));
 const Profile = lazy(() => import('./pages/user/Profile'));
 const Orders = lazy(() => import('./pages/user/Orders'));
 const Wishlist = lazy(() => import('./pages/user/Wishlist'));
+const LoyaltyDashboard = lazy(() => import('./pages/user/LoyaltyDashboard'));
 const PaymentResult = lazy(() => import('./pages/user/PaymentResult'));
 
 // ✅ MỚI: Contact & Voucher
@@ -54,6 +55,9 @@ const AdminSizes = lazy(() => import('./pages/admin/Sizes'));
 const AdminVouchers = lazy(() => import('./pages/admin/Vouchers'));
 const AdminReviews = lazy(() => import('./pages/admin/Reviews'));
 const AdminChat = lazy(() => import('./pages/admin/Chat'));
+const AdminAnalytics = lazy(() => import('./pages/admin/Analytics'));
+const AdminLoyalty = lazy(() => import('./pages/admin/Loyalty'));
+const AdminShipping = lazy(() => import('./pages/admin/Shipping'));
 
 const ScrollToTop = () => {
   const { pathname } = useLocation();
@@ -116,6 +120,7 @@ function App() {
                 {/* Protected */}
                 <Route path="/profile" element={<ProtectedRoute><SuspenseWrapper><Profile /></SuspenseWrapper></ProtectedRoute>} />
                 <Route path="/orders" element={<ProtectedRoute><SuspenseWrapper><Orders /></SuspenseWrapper></ProtectedRoute>} />
+                <Route path="/loyalty" element={<ProtectedRoute><SuspenseWrapper><LoyaltyDashboard /></SuspenseWrapper></ProtectedRoute>} />
 
                 {/* Admin */}
                 <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminLayout /></ProtectedRoute>}>
@@ -129,6 +134,9 @@ function App() {
                   <Route path="vouchers" element={<SuspenseWrapper><AdminVouchers /></SuspenseWrapper>} />
                   <Route path="reviews" element={<SuspenseWrapper><AdminReviews /></SuspenseWrapper>} />
                   <Route path="chat" element={<SuspenseWrapper><AdminChat /></SuspenseWrapper>} />
+                  <Route path="analytics" element={<SuspenseWrapper><AdminAnalytics /></SuspenseWrapper>} />
+                  <Route path="loyalty" element={<SuspenseWrapper><AdminLoyalty /></SuspenseWrapper>} />
+                  <Route path="shipping" element={<SuspenseWrapper><AdminShipping /></SuspenseWrapper>} />
                 </Route>
                 <Route path="/payment-result" element={<SuspenseWrapper><PaymentResult /></SuspenseWrapper>} />
 

@@ -164,6 +164,11 @@ const AdminLayout = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
+                        <Link to="/admin/loyalty" className={`nav-link ${isActive('/admin/loyalty')}`}>
+                            <FaStar /> Điểm & Thành viên
+                        </Link>
+                    </li>
+                    <li className="nav-item">
                         <Link to="/admin/chat" className={`nav-link ${isActive('/admin/chat')}`}>
                             <FaCommentDots /> Chat khách hàng
                         </Link>
