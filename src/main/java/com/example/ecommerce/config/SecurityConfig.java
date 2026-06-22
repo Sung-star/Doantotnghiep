@@ -23,33 +23,34 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
- @Bean
-public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
-    http.csrf(csrf -> csrf.disable())
-        .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-        .authorizeHttpRequests(auth -> auth
-            .requestMatchers("/h2-console/**").permitAll()
-            .requestMatchers("/products/**").permitAll()
-            .requestMatchers("/users/**").permitAll()
-            .requestMatchers("/orders/**").permitAll() 
-            .requestMatchers("/add-to-cart/**").permitAll()
-            .requestMatchers("/api/payment/**").permitAll() // Mở quyền cho VNPAY
-            .requestMatchers("/uploads/**").permitAll() 
-            .requestMatchers("/api/upload/**").permitAll() 
-            .requestMatchers("/admin/loyalty/**").permitAll() // Cho phép Điểm & Thành viên
-            .requestMatchers("/api/admin/loyalty/**").permitAll() // Cho phép Điểm & Thành viên (API)
-            .requestMatchers("/admin/**").hasRole("ADMIN")
-            .anyRequest().permitAll()
-        )
-        .httpBasic(Customizer.withDefaults()); 
+    @Bean
+    public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
+        http.csrf(csrf -> csrf.disable())
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .authorizeHttpRequests(auth -> auth
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/products/**").permitAll()
+                        .requestMatchers("/users/**").permitAll()
+                        .requestMatchers("/orders/**").permitAll()
+                        .requestMatchers("/add-to-cart/**").permitAll()
+                        .requestMatchers("/api/payment/**").permitAll() // Mở quyền cho VNPAY
+                        .requestMatchers("/uploads/**").permitAll()
+                        .requestMatchers("/api/upload/**").permitAll()
+                        .requestMatchers("/admin/loyalty/**").permitAll() // Cho phép Điểm & Thành viên
+                        .requestMatchers("/api/admin/loyalty/**").permitAll() // Cho phép Điểm & Thành viên (API)
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .anyRequest().permitAll())
+                .httpBasic(Customizer.withDefaults());
 
-    http.headers(headers -> headers.frameOptions(f -> f.disable()));
-    return http.build();
-}
+        http.headers(headers -> headers.frameOptions(f -> f.disable()));
+        return http.build();
+    }
+
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration config = new CorsConfiguration();
-        config.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000", "http://127.0.0.1:3000"));
+        config.setAllowedOrigins(Arrays.asList("http://localhost:5173", "http://localhost:3000",
+                "http://127.0.0.1:3000", "https://sporting-shop.vercel.app", "https://sporting-shop-fe.vercel.app"));
         config.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS"));
         config.setAllowedHeaders(Arrays.asList("*"));
         config.setAllowCredentials(true);
