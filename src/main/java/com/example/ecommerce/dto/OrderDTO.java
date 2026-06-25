@@ -18,10 +18,16 @@ public class OrderDTO {
     @NotBlank(message = "Shipping phone is required")
     private String shippingPhone;
 
+    @NotBlank(message = "Shipping email is required")
+    private String shippingEmail;
+
     @NotBlank(message = "Shipping address is required")
     private String shippingAddress;
 
     private String voucherCode;
+
+    // THÊM SỐ ĐIỂM SỬ DỤNG
+    private Integer pointsUsed = 0;
 
     public OrderDTO() {}
 
@@ -39,9 +45,15 @@ public class OrderDTO {
     public String getShippingPhone() { return shippingPhone; }
     public void setShippingPhone(String shippingPhone) { this.shippingPhone = shippingPhone; }
 
+    public String getShippingEmail() { return shippingEmail; }
+    public void setShippingEmail(String shippingEmail) { this.shippingEmail = shippingEmail; }
+
     public String getShippingAddress() { return shippingAddress; }
     public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }
 
     public String getVoucherCode() { return voucherCode; }
     public void setVoucherCode(String voucherCode) { this.voucherCode = voucherCode; }
+
+    public Integer getPointsUsed() { return pointsUsed; }
+    public void setPointsUsed(Integer pointsUsed) { this.pointsUsed = pointsUsed; }
 }

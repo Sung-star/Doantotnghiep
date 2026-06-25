@@ -2,11 +2,14 @@ import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import {
   ShoppingCart, User, ShoppingBag, Search, Menu, X,
-  LogOut, Package, LogIn, UserPlus, ShieldCheck, ChevronDown, Heart
+  LogOut, Package, LogIn, UserPlus, ShieldCheck, ChevronDown,
+  Heart, Sun, Moon, Phone, Tag, Crown
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 import { useCart } from '../../contexts/CartContext';
+import { useTheme } from '../../contexts/ThemeContext';
 import MiniCartSidebar from './MiniCartSidebar';
+import NotificationBell from '../common/NotificationBell';
 import api from '../../api/axiosConfig';
 import './Navbar.css';
 
@@ -15,8 +18,11 @@ const Navbar = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const { user, logout } = useAuth();
   const { cartItems, openMiniCart } = useCart();
+  const { theme, toggleTheme } = useTheme();
   const navigate = useNavigate();
   const [categories, setCategories] = useState([]);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
 
   React.useEffect(() => {
     const fetchCategories = async () => {
@@ -32,11 +38,32 @@ const Navbar = () => {
 
   const cartCount = cartItems.reduce((total, item) => total + item.quantity, 0);
 
+  React.useEffect(() => {
+    const delayDebounceFn = setTimeout(async () => {
+      if (searchTerm.trim().length > 1) {
+        setIsSearching(true);
+        try {
+          const res = await api.get(`/products?size=5&q=${encodeURIComponent(searchTerm)}`);
+          const data = res.data.content || res.data;
+          setSearchResults(Array.isArray(data) ? data.slice(0, 5) : []);
+        } catch (err) {
+          console.error(err);
+        } finally {
+          setIsSearching(false);
+        }
+      } else {
+        setSearchResults([]);
+      }
+    }, 300);
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchTerm]);
+
   const handleSearch = (e) => {
     e.preventDefault();
     if (searchTerm.trim()) {
       navigate(`/products?q=${encodeURIComponent(searchTerm)}`);
       setSearchTerm('');
+      setSearchResults([]);
       setIsMenuOpen(false);
     }
   };
@@ -50,6 +77,22 @@ const Navbar = () => {
     if (!imgUrl) return `https://ui-avatars.com/api/?name=${encodeURIComponent(name)}&background=0f172a&color=fff&bold=true`;
     if (imgUrl.startsWith('http') || imgUrl.startsWith('data:')) return imgUrl;
     return `http://localhost:8081${imgUrl.startsWith('/') ? '' : '/'}${imgUrl}`;
+  };
+
+  const getProductImage = (p) => {
+    const getUrl = (url) => {
+      if (!url) return 'https://via.placeholder.com/40?text=Shop';
+      if (url.startsWith('http') || url.startsWith('data:')) return url;
+      return `http://localhost:8081${url.startsWith('/') ? '' : '/'}${url}`;
+    };
+    const variants = p?.variants;
+    let variant = null;
+    if (Array.isArray(variants) && variants.length > 0) variant = variants[0];
+    else if (variants && typeof variants === 'object' && Object.values(variants).length > 0) variant = Object.values(variants)[0];
+
+    const sourceString = variant?.imgUrl || p?.imgUrl || '';
+    const urls = sourceString.split('|').map(u => u.trim()).filter(u => u !== '');
+    return urls.length > 0 ? getUrl(urls[0]) : 'https://via.placeholder.com/40?text=Shop';
   };
 
   const handleCategoryClick = (categoryName) => {
@@ -97,12 +140,12 @@ const Navbar = () => {
                   <div className="container-fluid px-4 py-4">
                     <div className="row g-4">
                       <div className="col-lg-3">
-                        <div className="mega-promo p-4 rounded-4 text-white d-flex flex-column justify-content-end" 
-                             style={{ 
-                               background: 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url("https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800")',
-                               backgroundSize: 'cover',
-                               height: '250px'
-                             }}>
+                        <div className="mega-promo p-4 rounded-4 text-white d-flex flex-column justify-content-end"
+                          style={{
+                            background: 'linear-gradient(rgba(0,0,0,0.2), rgba(0,0,0,0.8)), url("https://images.unsplash.com/photo-1552346154-21d32810aba3?w=800")',
+                            backgroundSize: 'cover',
+                            height: '250px'
+                          }}>
                           <h5 className="fw-black mb-1">XU HƯỚNG MỚI</h5>
                           <p className="small mb-2 text-white-50">Khám phá phong cách đẳng cấp cùng Sporting Shop.</p>
                           <Link to="/products" className="btn btn-light btn-sm fw-bold rounded-pill px-3" style={{ width: 'fit-content' }}>XEM NGAY</Link>
@@ -115,7 +158,7 @@ const Navbar = () => {
                           <ul className="list-unstyled">
                             {categories.filter(c => c.parent && c.parent.id === rootCategory.id).map(child => (
                               <li key={child.id} className="mb-2">
-                                <span onClick={() => handleCategoryClick(child.name)} style={{cursor: 'pointer'}} className="d-block py-1 mega-link-luxury">
+                                <span onClick={() => handleCategoryClick(child.name)} style={{ cursor: 'pointer' }} className="d-block py-1 mega-link-luxury">
                                   {child.name}
                                 </span>
                               </li>
@@ -128,30 +171,37 @@ const Navbar = () => {
                 </div>
               </li>
 
+              {/* ✅ MỚI: VOUCHER */}
+              <li className="nav-item">
+                <Link className="nav-link nav-link-luxury d-flex align-items-center gap-1" to="/vouchers">
+                  <Tag size={14} />
+                  VOUCHER
+                  <span className="navbar-voucher-badge">HOT</span>
+                </Link>
+              </li>
+
               <li className="nav-item">
                 <Link className="nav-link nav-link-luxury" to="/about">CÂU CHUYỆN</Link>
+              </li>
+
+              {/* ✅ MỚI: LIÊN HỆ */}
+              <li className="nav-item">
+                <Link className="nav-link nav-link-luxury d-flex align-items-center gap-1" to="/contact">
+                  <Phone size={14} />
+                  LIÊN HỆ
+                </Link>
               </li>
             </ul>
           </div>
 
           {/* 3. SEARCH & ACTIONS */}
           <div className="d-flex align-items-center gap-2 gap-md-3">
-            <form onSubmit={handleSearch} className="d-none d-md-flex me-2">
-              <div className="input-group search-group-luxury">
-                <span className="input-group-text border-0 bg-transparent ps-3"><Search size={18} className="text-muted" /></span>
-                <input
-                  type="text"
-                  className="form-control border-0 shadow-none bg-transparent ps-2"
-                  placeholder="Tìm phong cách của bạn..."
-                  value={searchTerm}
-                  onChange={(e) => setSearchTerm(e.target.value)}
-                />
-              </div>
-            </form>
-
             <Link to="/wishlist" className="luxury-icon-btn">
               <Heart size={20} />
             </Link>
+
+            <NotificationBell />
+
 
             <button type="button" className="luxury-icon-btn position-relative" onClick={openMiniCart}>
               <ShoppingCart size={20} />
@@ -166,8 +216,8 @@ const Navbar = () => {
                 data-bs-toggle="dropdown"
               >
                 {user ? (
-                  <img 
-                    src={getAvatar(user.imgUrl, user.name)} 
+                  <img
+                    src={getAvatar(user.imgUrl, user.name)}
                     className="avatar-nav border border-2 border-white shadow-sm"
                     alt="user"
                   />
@@ -183,8 +233,8 @@ const Navbar = () => {
                   <>
                     <li className="p-3 mb-2 bg-light rounded-4">
                       <div className="d-flex align-items-center gap-3">
-                        <img 
-                          src={getAvatar(user.imgUrl, user.name)} 
+                        <img
+                          src={getAvatar(user.imgUrl, user.name)}
                           className="rounded-circle border border-2 border-white"
                           width="45" height="45" alt="user"
                         />
@@ -202,6 +252,17 @@ const Navbar = () => {
                     <li>
                       <Link className="dropdown-item luxury-dropdown-item" to="/orders">
                         <Package size={18} className="me-3" /> Lịch sử đơn hàng
+                      </Link>
+                    </li>
+                    {/* ✅ MỚI: Voucher của tôi trong dropdown */}
+                    <li>
+                      <Link className="dropdown-item luxury-dropdown-item" to="/vouchers">
+                        <Tag size={18} className="me-3" /> Voucher của tôi
+                      </Link>
+                    </li>
+                    <li>
+                      <Link className="dropdown-item luxury-dropdown-item" to="/loyalty" style={{ color: '#f59e0b', fontWeight: 700 }}>
+                        <Crown size={18} className="me-3" /> Điểm thưởng & Hạng
                       </Link>
                     </li>
                     {user.roles && user.roles.some(r => (r.authority === 'ROLE_ADMIN' || r.name === 'ROLE_ADMIN')) && (
@@ -234,9 +295,29 @@ const Navbar = () => {
                 )}
               </ul>
             </div>
-
           </div>
         </div>
+
+        {/* MOBILE MENU */}
+        {isMenuOpen && (
+          <div className="navbar-mobile-menu d-lg-none">
+            <ul className="list-unstyled p-3 m-0">
+              <li><Link className="nav-link nav-link-luxury py-3 border-bottom" to="/" onClick={() => setIsMenuOpen(false)}>TRANG CHỦ</Link></li>
+              <li><Link className="nav-link nav-link-luxury py-3 border-bottom" to="/products" onClick={() => setIsMenuOpen(false)}>BỘ SƯU TẬP</Link></li>
+              <li>
+                <Link className="nav-link nav-link-luxury py-3 border-bottom d-flex align-items-center gap-2" to="/vouchers" onClick={() => setIsMenuOpen(false)}>
+                  <Tag size={16} /> VOUCHER <span className="navbar-voucher-badge">HOT</span>
+                </Link>
+              </li>
+              <li><Link className="nav-link nav-link-luxury py-3 border-bottom" to="/about" onClick={() => setIsMenuOpen(false)}>CÂU CHUYỆN</Link></li>
+              <li>
+                <Link className="nav-link nav-link-luxury py-3 d-flex align-items-center gap-2" to="/contact" onClick={() => setIsMenuOpen(false)}>
+                  <Phone size={16} /> LIÊN HỆ
+                </Link>
+              </li>
+            </ul>
+          </div>
+        )}
       </nav>
       <MiniCartSidebar />
     </>

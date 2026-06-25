@@ -9,7 +9,8 @@ public enum OrderStatus {
 	COMPLETED(5),
 	CANCELLED(6),
 	PAID(7),
-	WAITING_PAYMENT(8);
+	WAITING_PAYMENT(8),
+	REFUNDED(9);
 	
 	private int orderStatusCode;
 	

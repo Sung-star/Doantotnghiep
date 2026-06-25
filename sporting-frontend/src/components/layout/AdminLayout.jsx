@@ -4,7 +4,7 @@ import { useAuth } from '../../contexts/AuthContext';
 import { 
     FaTachometerAlt, FaBox, FaList, FaShoppingCart, 
     FaUsers, FaSignOutAlt, FaBars, FaUserCircle, FaSearch,
-    FaTicketAlt, FaCreditCard, FaRuler, FaStar, FaCommentDots
+    FaTicketAlt, FaCreditCard, FaRuler, FaStar, FaCommentDots, FaUndo
 } from 'react-icons/fa';
 
 const AdminLayout = () => {
@@ -139,6 +139,11 @@ const AdminLayout = () => {
                         </Link>
                     </li>
                     <li className="nav-item">
+                        <Link to="/admin/returns" className={`nav-link ${isActive('/admin/returns')}`}>
+                            <FaUndo /> Yêu cầu hoàn trả
+                        </Link>
+                    </li>
+                    <li className="nav-item">
                         <Link to="/admin/users" className={`nav-link ${isActive('/admin/users')}`}>
                             <FaUsers /> Người dùng
                         </Link>
@@ -161,6 +166,11 @@ const AdminLayout = () => {
                     <li className="nav-item">
                         <Link to="/admin/reviews" className={`nav-link ${isActive('/admin/reviews')}`}>
                             <FaStar /> Đánh giá
+                        </Link>
+                    </li>
+                    <li className="nav-item">
+                        <Link to="/admin/loyalty" className={`nav-link ${isActive('/admin/loyalty')}`}>
+                            <FaStar /> Điểm & Thành viên
                         </Link>
                     </li>
                     <li className="nav-item">

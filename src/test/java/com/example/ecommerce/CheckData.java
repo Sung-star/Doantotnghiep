@@ -3,12 +3,14 @@ package com.example.ecommerce;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.transaction.annotation.Transactional;
 import com.example.ecommerce.repositories.ProductRepository;
 import com.example.ecommerce.repositories.UserRepository;
 import com.example.ecommerce.repositories.ProductVariantRepository;
 
 @SpringBootTest
+@ActiveProfiles("test")
 class CheckData {
 
     @Autowired private ProductRepository productRepository;

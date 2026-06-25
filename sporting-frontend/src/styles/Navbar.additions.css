@@ -1,0 +1,51 @@
+/* ===========================
+   NAVBAR ADDITIONS
+   Thêm vào file Navbar.css gốc
+=========================== */
+
+/* VOUCHER BADGE trong nav-link */
+.navbar-voucher-badge {
+  display: inline-block;
+  font-size: 9px;
+  font-weight: 900;
+  letter-spacing: 1px;
+  color: #fff;
+  background: linear-gradient(135deg, #ff5722, #ff9800);
+  padding: 2px 7px;
+  border-radius: 100px;
+  line-height: 1.4;
+  vertical-align: middle;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+@keyframes badge-pulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.85; transform: scale(1.05); }
+}
+
+/* LUXURY BADGE - HOT variant */
+.luxury-badge--hot {
+  background: #ff5722 !important;
+  min-width: 14px !important;
+  height: 14px !important;
+  font-size: 9px !important;
+  animation: badge-pulse 2s ease-in-out infinite;
+}
+
+/* MOBILE MENU (nếu chưa có) */
+.navbar-mobile-menu {
+  background: #fff;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  position: absolute;
+  top: 100%;
+  left: 0;
+  right: 0;
+  z-index: 999;
+  box-shadow: 0 12px 40px rgba(0,0,0,0.1);
+  animation: slide-down 0.2s ease;
+}
+
+@keyframes slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}

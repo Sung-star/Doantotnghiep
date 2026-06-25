@@ -6,6 +6,7 @@ import {
     FaTruckMoving, FaUndoAlt, FaChevronRight, FaStar 
 } from 'react-icons/fa';
 import RecentlyViewed from '../../components/product/RecentlyViewed';
+import RelatedProducts from '../../components/product/RelatedProducts';
 import { useCart } from '../../contexts/CartContext';
 import { useWishlist } from '../../contexts/WishlistContext';
 import { useAuth } from '../../contexts/AuthContext';
@@ -393,6 +394,11 @@ const ProductDetail = () => {
                 </div>
             </div>
         </div>
+
+        {/* Related Products */}
+        {product.categories && product.categories.length > 0 && (
+            <RelatedProducts currentProductId={product.id} categoryName={product.categories[0].name} />
+        )}
 
         {/* Recently Viewed Products */}
         <RecentlyViewed currentId={product.id} />

@@ -4,6 +4,7 @@ import {
     Award, Truck, ShieldCheck, Heart, Sparkles, Globe 
 } from 'lucide-react';
 import { Link } from 'react-router-dom';
+import { motion } from 'framer-motion';
 
 const AboutPage = () => {
   return (
@@ -13,7 +14,12 @@ const AboutPage = () => {
       <div className="position-relative overflow-hidden py-5 mb-5" style={{ background: 'var(--bg-main)' }}>
         <div className="container position-relative py-5">
             <div className="row justify-content-center text-center">
-                <div className="col-lg-8">
+                <motion.div 
+                    initial={{ opacity: 0, y: 30 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.8 }}
+                    className="col-lg-8"
+                >
                     <span className="text-uppercase tracking-widest small fw-black text-muted mb-3 d-block">CHƯƠNG TIẾP THEO CỦA PHONG CÁCH</span>
                     <h1 className="display-3 fw-black text-dark mb-4 text-uppercase tracking-tighter" style={{ lineHeight: 0.9 }}>
                         KẾT NỐI <span className="text-gradient">ĐAM MÊ</span> <br/> KIẾN TẠO <span className="text-dark">ĐẲNG CẤP</span>
@@ -26,7 +32,7 @@ const AboutPage = () => {
                             KHÁM PHÁ BỘ SƯU TẬP <ArrowRight size={18} />
                         </Link>
                     </div>
-                </div>
+                </motion.div>
             </div>
         </div>
       </div>
@@ -34,7 +40,13 @@ const AboutPage = () => {
       <div className="container">
         {/* --- BRAND STORY SECTION --- */}
         <div className="row g-5 align-items-center mb-5 pb-5">
-          <div className="col-lg-6">
+          <motion.div 
+            initial={{ opacity: 0, x: -50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8 }}
+            className="col-lg-6"
+          >
             <div className="position-relative">
                 <div className="luxury-card p-0 overflow-hidden border-0" style={{ borderRadius: '40px' }}>
                     <img 
@@ -49,9 +61,15 @@ const AboutPage = () => {
                     <p className="small text-white-50 mb-0 fw-bold">NĂM DẪN ĐẦU XU HƯỚNG THỂ THAO CAO CẤP</p>
                 </div>
             </div>
-          </div>
+          </motion.div>
           
-          <div className="col-lg-6 ps-lg-5">
+          <motion.div 
+            initial={{ opacity: 0, x: 50 }}
+            whileInView={{ opacity: 1, x: 0 }}
+            viewport={{ once: true }}
+            transition={{ duration: 0.8, delay: 0.2 }}
+            className="col-lg-6 ps-lg-5"
+          >
             <div className="ps-lg-4">
                 <div className="d-flex align-items-center gap-2 mb-3">
                     <div className="bg-dark" style={{ width: '40px', height: '2px' }}></div>
@@ -86,7 +104,7 @@ const AboutPage = () => {
                     </div>
                 </div>
             </div>
-          </div>
+          </motion.div>
         </div>
 
         {/* --- VALUES GRID --- */}
@@ -102,7 +120,14 @@ const AboutPage = () => {
             { icon: <Users size={32} />, title: "CỘNG ĐỒNG", desc: "Xây dựng một cộng đồng năng động, nơi mọi người cùng truyền cảm hứng cho nhau.", bg: "#eff6ff" },
             { icon: <Heart size={32} />, title: "TẬN TÂM", desc: "Đảm bảo chất lượng dịch vụ chu đáo và chính sách đổi trả vô cùng linh hoạt.", bg: "#fff1f2" }
           ].map((v, i) => (
-            <div className="col-md-3" key={i}>
+            <motion.div 
+              key={i}
+              initial={{ opacity: 0, y: 30 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              viewport={{ once: true }}
+              transition={{ duration: 0.5, delay: i * 0.1 }}
+              className="col-md-3"
+            >
                 <div className="luxury-card border-0 text-center p-5 h-100" style={{ borderRadius: '30px' }}>
                     <div className="mb-4 d-flex justify-content-center">
                         <div className="p-4 rounded-circle" style={{ background: v.bg, color: 'var(--primary)' }}>
@@ -112,7 +137,7 @@ const AboutPage = () => {
                     <h5 className="fw-black mb-3 text-uppercase">{v.title}</h5>
                     <p className="text-muted small mb-0">{v.desc}</p>
                 </div>
-            </div>
+            </motion.div>
           ))}
         </div>
 

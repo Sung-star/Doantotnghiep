@@ -1,8 +1,10 @@
 package com.example.ecommerce.resources;
 
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -36,8 +38,8 @@ public class OrderResource {
     // ĐẶT HÀNG MỚI (Nhận dữ liệu từ trang thanh toán)
     @PostMapping
     public ResponseEntity<Order> insert(@Valid @RequestBody OrderDTO dto) {
-        Order obj = service.placeOrder(dto); 
-        return ResponseEntity.ok().body(obj);
+        Order obj = service.placeOrder(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(obj);
     }
 
     // XÓA ĐƠN HÀNG (Admin/User bấm nút Thùng rác)
@@ -48,16 +50,27 @@ public class OrderResource {
     }
 
     // CẬP NHẬT TRẠNG THÁI (Nút Thu tiền & Dropdown trạng thái)
-    @PutMapping(value = "/{id}/status")
-    public ResponseEntity<Order> updateStatus(@PathVariable("id") Long id, @RequestBody String status) {
+    @RequestMapping(value = "/{id}/status", method = {RequestMethod.PUT, RequestMethod.PATCH})
+    public ResponseEntity<Order> updateStatus(
+            @PathVariable("id") Long id,
+            @RequestBody(required = false) Map<String, String> payload,
+            @RequestParam(value = "status", required = false) String statusQuery) {
         try {
-            // SỬA LỖI QUAN TRỌNG: Làm sạch chuỗi gửi từ Axios/React
-            // Ví dụ: ""PAID"" -> "PAID"
+            String status = null;
+            if (payload != null && payload.containsKey("status")) {
+                status = payload.get("status");
+            } else if (statusQuery != null) {
+                status = statusQuery;
+            }
+            if (status == null || status.isBlank()) {
+                return ResponseEntity.badRequest().build();
+            }
             String cleanStatus = status.replace("\"", "").trim().toUpperCase();
-            
             Order obj = service.updateStatus(id, OrderStatus.valueOf(cleanStatus));
             return ResponseEntity.ok().body(obj);
         } catch (Exception e) {
+            System.err.println(">>> [ERROR] updateStatus failed: " + e.getMessage());
+    e.printStackTrace();
             return ResponseEntity.badRequest().build();
         }
     }

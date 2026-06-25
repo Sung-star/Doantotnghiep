@@ -85,11 +85,23 @@ public class TestConfig implements CommandLineRunner {
             System.out.println(">>> Đang cập nhật dữ liệu 34 tỉnh thành (Cải cách 2025)...");
             
             // Xóa dữ liệu cũ để tránh trùng lặp hoặc sai lệch số lượng
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0");
-            jdbcTemplate.execute("TRUNCATE TABLE wards");
-            jdbcTemplate.execute("TRUNCATE TABLE districts");
-            jdbcTemplate.execute("TRUNCATE TABLE provinces");
-            jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1");
+            try {
+                jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY FALSE"); // For H2
+            } catch (Exception e) {
+                try {
+                    jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 0"); // For MySQL
+                } catch (Exception ex) {}
+            }
+            try { jdbcTemplate.execute("TRUNCATE TABLE wards"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("TRUNCATE TABLE districts"); } catch (Exception e) {}
+            try { jdbcTemplate.execute("TRUNCATE TABLE provinces"); } catch (Exception e) {}
+            try {
+                jdbcTemplate.execute("SET REFERENTIAL_INTEGRITY TRUE"); // For H2
+            } catch (Exception e) {
+                try {
+                    jdbcTemplate.execute("SET FOREIGN_KEY_CHECKS = 1"); // For MySQL
+                } catch (Exception ex) {}
+            }
 
             String[] provinceNames = {
                 "Thủ đô Hà Nội", "Thành phố Hồ Chí Minh", "Thành phố Đà Nẵng", "Thành phố Hải Phòng", "Thành phố Cần Thơ", "Thành phố Huế",

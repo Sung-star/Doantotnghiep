@@ -18,4 +18,7 @@ public interface ProductSizeRepository extends JpaRepository<ProductSize, Long> 
     // New method to find by variant and size
     @Query("SELECT ps FROM ProductSize ps WHERE ps.productVariant.id = :variantId AND ps.size = :sizeName")
     Optional<ProductSize> findByVariantAndSize(@Param("variantId") Long variantId, @Param("sizeName") String sizeName);
+
+    @Query("SELECT ps FROM ProductSize ps WHERE ps.productVariant.product.id = :productId AND ps.size = :sizeName")
+    java.util.List<ProductSize> findAllByProductAndSize(@Param("productId") Long productId, @Param("sizeName") String sizeName);
 }

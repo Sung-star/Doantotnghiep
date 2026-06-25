@@ -17,6 +17,12 @@ public class ProductSizeResource {
     @Autowired
     private ProductSizeRepository repository;
 
+    @PostMapping
+    public ResponseEntity<ProductSize> createSize(@RequestBody ProductSize productSize) {
+        ProductSize saved = repository.save(productSize);
+        return ResponseEntity.ok().body(saved);
+    }
+
     @PutMapping(value = "/{id}")
     public ResponseEntity<ProductSize> updateQuantity(@PathVariable Long id, @RequestBody Map<String, Integer> payload) {
         ProductSize ps = repository.findById(id).orElseThrow(() -> new RuntimeException("Size not found"));
@@ -25,5 +31,11 @@ public class ProductSizeResource {
         }
         ps = repository.save(ps);
         return ResponseEntity.ok().body(ps);
+    }
+
+    @DeleteMapping(value = "/{id}")
+    public ResponseEntity<Void> deleteSize(@PathVariable Long id) {
+        repository.deleteById(id);
+        return ResponseEntity.noContent().build();
     }
 }

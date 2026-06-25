@@ -51,6 +51,7 @@ const Orders = () => {
       case 'CANCELLED': return <span className="badge bg-danger px-3">Đã hủy</span>;
       case 'PAID': return <span className="badge bg-primary px-3">Đã thanh toán</span>;
       case 'WAITING_PAYMENT': return <span className="badge bg-secondary px-3">Chờ thanh toán</span>;
+      case 'REFUNDED': return <span className="badge bg-secondary px-3">Đã hoàn tiền</span>;
       default: return <span className="badge bg-secondary px-3">{status}</span>;
     }
   };
@@ -221,6 +222,43 @@ const Orders = () => {
                                 <div className="small text-muted fw-bold text-uppercase mb-2">Hình thức thanh toán</div>
                                 <div className="badge bg-dark px-3 py-2 text-uppercase tracking-widest">{selectedOrder.payment ? 'Online (Đã trả)' : 'Thanh toán khi nhận hàng'}</div>
                             </div>
+                            {(selectedOrder.orderStatus === 'DELIVERED' || selectedOrder.orderStatus === 'COMPLETED') && (
+                                <div className="mt-4 pt-4 border-top border-2">
+                                    <button 
+                                        className="btn btn-outline-danger w-100 fw-bold" 
+                                        style={{padding: '0.8rem 1rem', borderRadius: '15px'}}
+                                        onClick={() => {
+                                            const modalEl = document.getElementById('orderDetailModal');
+                                            // Bootstrap modal close
+                                            const btnClose = modalEl?.querySelector('.btn-close');
+                                            if (btnClose) btnClose.click();
+                                            setTimeout(() => {
+                                                navigate(`/returns/${selectedOrder.id}`);
+                                            }, 300);
+                                        }}
+                                    >
+                                        YÊU CẦU HOÀN TRẢ / ĐỔI HÀNG
+                                    </button>
+                                </div>
+                            )}
+                            {selectedOrder.orderStatus === 'REFUNDED' && (
+                                <div className="mt-4 pt-4 border-top border-2">
+                                    <button 
+                                        className="btn btn-outline-secondary w-100 fw-bold" 
+                                        style={{padding: '0.8rem 1rem', borderRadius: '15px'}}
+                                        onClick={() => {
+                                            const modalEl = document.getElementById('orderDetailModal');
+                                            const btnClose = modalEl?.querySelector('.btn-close');
+                                            if (btnClose) btnClose.click();
+                                            setTimeout(() => {
+                                                navigate(`/returns/${selectedOrder.id}`);
+                                            }, 300);
+                                        }}
+                                    >
+                                        XEM CHI TIẾT YÊU CẦU TRẢ HÀNG
+                                    </button>
+                                </div>
+                            )}
                         </div>
 
                         <div className="pt-4 border-top border-2">

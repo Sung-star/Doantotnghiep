@@ -25,6 +25,7 @@ import com.example.ecommerce.repositories.ProductVariantRepository;
 import com.example.ecommerce.repositories.UserRepository;
 import com.example.ecommerce.repositories.VoucherRepository;
 import com.example.ecommerce.services.exceptions.BadRequestException;
+import com.example.ecommerce.services.exceptions.ResourceNotFoundException;
 
 
 @Service
@@ -51,13 +52,16 @@ public class OrderService {
     @Autowired
     private EmailService emailService;
 
+    @Autowired
+private LoyaltyService loyaltyService;
+
     public List<Order> findAll() {
         return repository.findAll();
     }
 
     public Order findById(Long id) {
         Optional<Order> obj = repository.findById(id);
-        return obj.orElseThrow(() -> new RuntimeException("Không tìm thấy đơn hàng ID: " + id));
+        return obj.orElseThrow(() -> new ResourceNotFoundException("Đơn hàng không tồn tại với ID: " + id));
     }
 
     @Transactional
@@ -67,26 +71,57 @@ public class OrderService {
                     .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại!"));
             repository.delete(order);
         } catch (Exception e) {
-            e.printStackTrace();
             throw new RuntimeException("Lỗi khi xóa đơn hàng: " + e.getMessage());
         }
     }
 
     @Transactional
-    public Order updateStatus(Long id, OrderStatus status) {
-        Order order = repository.findById(id).orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
-        order.setOrderStatus(status);
-        if (status == OrderStatus.PAID && order.getPayment() == null) {
-            Payment pay = new Payment(null, Instant.now(), order);
-            order.setPayment(pay);
-        }
-        order = repository.save(order);
-        
-        // Trigger status update email
-        emailService.sendStatusUpdate(order);
-        
-        return order;
+public Order updateStatus(Long id, OrderStatus status) {
+    Order order = repository.findById(id)
+            .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+    
+    OrderStatus oldStatus = order.getOrderStatus(); // lưu status cũ
+    order.setOrderStatus(status);
+    
+    if (status == OrderStatus.PAID && order.getPayment() == null) {
+        Payment pay = new Payment(null, Instant.now(), order);
+        order.setPayment(pay);
     }
+    
+    order = repository.save(order);
+    System.out.println(">>> [DEBUG] updateStatus called: id=" + id + " status=" + status + " oldStatus=" + oldStatus);
+System.out.println(">>> [DEBUG] client id=" + order.getClient().getId());
+System.out.println(">>> [DEBUG] items count=" + order.getItems().size());
+
+    // CỘNG ĐIỂM KHI ĐƠN HÀNG GIAO THÀNH CÔNG
+    if ((status == OrderStatus.DELIVERED || status == OrderStatus.COMPLETED) 
+        && oldStatus != OrderStatus.DELIVERED && oldStatus != OrderStatus.COMPLETED) {
+        try {
+            double orderTotal = order.getItems().stream()
+                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                    .sum();
+            loyaltyService.addPoints(order.getClient().getId(), orderTotal);
+        } catch (Exception e) {
+            // Không để lỗi loyalty ảnh hưởng đến đơn hàng
+            System.err.println(">>> [LOYALTY] Lỗi cộng điểm cho order-" + id + ": " + e.getMessage());
+        }
+    }
+
+    // HOÀN ĐIỂM KHI HỦY ĐƠN (chỉ hoàn nếu trước đó đã DELIVERED)
+    if (status == OrderStatus.CANCELLED && oldStatus == OrderStatus.DELIVERED) {
+        try {
+            double orderTotal = order.getItems().stream()
+                    .mapToDouble(item -> item.getPrice() * item.getQuantity())
+                    .sum();
+            loyaltyService.refundPoints(order.getClient().getId(), orderTotal);
+        } catch (Exception e) {
+            System.err.println(">>> [LOYALTY] Lỗi hoàn điểm cho order-" + id + ": " + e.getMessage());
+        }
+    }
+
+    emailService.sendStatusUpdate(order);
+    return order;
+}
 
     // --- ĐẶT HÀNG MỚI (LOGIC MỚI: DÙNG TÊN SIZE DẠNG STRING) ---
     @Transactional
@@ -100,6 +135,7 @@ public class OrderService {
         
         // Lưu thông tin giao hàng
         order.setShippingName(dto.getShippingName());
+        order.setShippingEmail(dto.getShippingEmail());
         order.setShippingPhone(dto.getShippingPhone());
         order.setShippingAddress(dto.getShippingAddress());
 
@@ -108,13 +144,25 @@ public class OrderService {
         order.setShippingFee(shippingFee);
 
         // Áp dụng voucher nếu có
-        if (dto.getVoucherCode() != null && !dto.getVoucherCode().trim().isEmpty()) {
-            Voucher voucher = voucherRepository.findActiveByCode(dto.getVoucherCode().trim())
+        Voucher voucherToApply = null;
+        if (dto.getVoucherCode() != null && !dto.getVoucherCode().trim().isEmpty() && !"null".equals(dto.getVoucherCode())) {
+            voucherToApply = voucherRepository.findActiveByCode(dto.getVoucherCode().trim())
                     .orElseThrow(() -> new BadRequestException("Mã giảm giá không hợp lệ hoặc đã hết hạn!"));
             order.setVoucherCode(dto.getVoucherCode());
-            // Discount sẽ tính sau khi có tổng tiền, nhưng tạm set 0
+        } else {
+            order.setVoucherCode(null);
             order.setDiscountAmount(0.0);
         }
+
+        // XỬ LÝ DÙNG ĐIỂM (LOYALTY POINTS)
+        // NOTE: Loyalty points are now managed by LoyaltyService, not User.points
+        Integer pointsUsed = dto.getPointsUsed() != null ? dto.getPointsUsed() : 0;
+if (pointsUsed > 0) {
+    loyaltyService.deductPoints(dto.getClientId(), pointsUsed.longValue());
+    order.setPointsUsed(pointsUsed);
+} else {
+    order.setPointsUsed(0);
+}
 
         // Lưu Order trước để có ID
         order = repository.save(order);
@@ -144,6 +192,12 @@ public class OrderService {
             // D. TRỪ KHO VÀ LƯU LẠI
             productSize.setQuantity(productSize.getQuantity() - itemDto.getQuantity());
             productSizeRepository.save(productSize); // Cập nhật số lượng mới vào DB
+            
+            // TÍNH NĂNG NÂNG CAO: CẢNH BÁO HẾT HÀNG (LOW STOCK WARNING)
+            if (productSize.getQuantity() <= 5) {
+                // Gửi email cho admin (Giả sử gửi vào email của người dùng đầu tiên hoặc 1 email admin cố định)
+                emailService.sendLowStockWarning(variant.getProduct(), variant, productSize);
+            }
 
             // E. TẠO ORDER ITEM
             double itemPrice = variant.getProduct().getPrice();
@@ -158,14 +212,25 @@ public class OrderService {
             orderItemRepository.save(item);
         }
 
-        // Tính lại discount sau khi có items
-        if (order.getVoucherCode() != null) {
-            Voucher voucher = voucherRepository.findActiveByCode(order.getVoucherCode())
-                    .orElseThrow(() -> new RuntimeException("Voucher không còn hợp lệ!"));
-            double discount = calculateDiscount(order, voucher);
-            order.setDiscountAmount(discount);
-            repository.save(order); // Update discount
+        // 4. Áp dụng Voucher (nếu có) và tính tiền dựa trên Subtotal thực tế
+        double totalDiscount = 0.0;
+        
+        if (voucherToApply != null) {
+            double voucherDiscount = calculateDiscount(order, voucherToApply);
+            totalDiscount += voucherDiscount;
+            
+            // Cập nhật lượt dùng Voucher ngay lập tức
+            Integer currentUsed = voucherToApply.getUsedCount() != null ? voucherToApply.getUsedCount() : 0;
+            voucherToApply.setUsedCount(currentUsed + 1);
+            voucherRepository.save(voucherToApply);
         }
+        
+        // Thêm giảm giá từ điểm tích lũy (1 điểm = 100đ)
+        if (pointsUsed > 0) {
+            totalDiscount += (pointsUsed * 100.0);
+        }
+        
+        order.setDiscountAmount(totalDiscount);
 
         Order finalOrder = repository.save(order);
         
@@ -196,11 +261,12 @@ public class OrderService {
 
     private double calculateDiscount(Order order, Voucher voucher) {
         double subtotal = order.getItems().stream()
-                .mapToDouble(item -> item.getSubTotal() != null ? item.getSubTotal() : 0.0)
+                .mapToDouble(item -> item.getPrice() * item.getQuantity())
                 .sum();
 
         if (subtotal < voucher.getMinOrderAmount()) {
-            throw new BadRequestException("Đơn hàng chưa đạt giá trị tối thiểu để áp dụng voucher!");
+            throw new BadRequestException("Đơn hàng phải tối thiểu " + 
+                String.format("%,.0f", voucher.getMinOrderAmount()) + "đ để dùng mã này!");
         }
 
         double discount = subtotal * (voucher.getDiscountPercent() / 100.0);

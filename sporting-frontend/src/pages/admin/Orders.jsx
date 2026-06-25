@@ -3,7 +3,7 @@ import instance from '../../api/axiosConfig';
 import { 
   FaTrash, FaCheck, FaInfoCircle, FaSync, 
   FaUser, FaPhoneAlt, FaMapMarkerAlt, FaCalendarAlt,
-  FaReceipt, FaShippingFast, FaCheckCircle, FaExclamationCircle, FaTimes, FaEye, FaClock
+  FaReceipt, FaShippingFast, FaCheckCircle, FaExclamationCircle, FaTimes, FaEye, FaClock, FaUndo
 } from 'react-icons/fa';
 
 const AdminOrders = () => {
@@ -25,7 +25,7 @@ const AdminOrders = () => {
 
     const handleUpdateStatus = async (id, newStatus) => {
         try {
-            await instance.put(`/orders/${id}/status`, `"${newStatus}"`, {
+            await instance.put(`/orders/${id}/status`, { status: newStatus }, {
                 headers: { "Content-Type": "application/json" }
             });
             fetchOrders();
@@ -53,6 +53,7 @@ const AdminOrders = () => {
             case 'CANCELLED': return { text: 'Đã hủy', color: 'bg-danger', icon: <FaTimes /> };
             case 'PAID': return { text: 'Đã thanh toán', color: 'bg-success', icon: <FaCheckCircle /> };
             case 'WAITING_PAYMENT': return { text: 'Chờ thanh toán', color: 'bg-secondary', icon: <FaClock /> };
+            case 'REFUNDED': return { text: 'Đã hoàn trả', color: 'bg-secondary', icon: <FaUndo /> };
             default: return { text: status, color: 'bg-secondary', icon: null };
         }
     };

@@ -3,6 +3,7 @@ import { useCart } from '../../contexts/CartContext';
 import { useAuth } from '../../contexts/AuthContext';
 import api from '../../api/axiosConfig';
 import { useNavigate } from 'react-router-dom';
+import VoucherSelector from './VoucherSelector';
 import { 
   FaQrcode, FaMoneyBillWave, FaCheckCircle,
   FaMapMarkerAlt, FaUser, FaPhoneAlt, FaArrowLeft,
@@ -14,19 +15,21 @@ const Checkout = () => {
   const { cartItems, getTotalPrice, clearCart } = useCart();
   const { user } = useAuth();
   const navigate = useNavigate();
-  
+  const [selectedVoucher, setSelectedVoucher] = useState(null);
+  const [usePoints, setUsePoints] = useState(false);
+  const [pointsUsed, setPointsUsed] = useState(0);
+
   const [savedAddresses, setSavedAddresses] = useState([]);
   const [showAddressModal, setShowAddressModal] = useState(false);
   
   const [shippingInfo, setShippingInfo] = useState({
     fullName: user?.name || '',
+    email: user?.email || '',
     phone: user?.phone || '',
     address: ''
   });
   
   const [paymentMethod, setPaymentMethod] = useState('COD');
-  const [voucherCode, setVoucherCode] = useState('');
-  const [appliedVoucher, setAppliedVoucher] = useState(null);
   const [shippingFee, setShippingFee] = useState(0);
   const [orderResponse, setOrderResponse] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -142,57 +145,58 @@ const Checkout = () => {
     }
   }, [selectedProvince, selectedDistrict, selectedWard, detailAddress, provinces, districts, wards]);
 
-  const handleApplyVoucher = async () => {
-    if (!voucherCode.trim()) return;
-    try {
-      const res = await api.get('/vouchers');
-      const voucher = res.data.find(v => v.code === voucherCode.trim() && v.active);
-      
-      if (!voucher) {
-        alert("Mã giảm giá không hợp lệ hoặc đã hết hạn!");
-        return;
+  // Tính toán Subtotal từ giỏ hàng
+  const subtotal = getTotalPrice();
+
+  // Logic tính tiền giảm (Thực hiện ngay trên Frontend để UX mượt mà)
+  const calculateDiscountAmount = () => {
+      if (!selectedVoucher || subtotal < selectedVoucher.minOrderAmount) return 0;
+      let discount = subtotal * (selectedVoucher.discountPercent / 100);
+      if (selectedVoucher.maxDiscountAmount && discount > selectedVoucher.maxDiscountAmount) {
+          discount = selectedVoucher.maxDiscountAmount;
       }
-
-      const subtotal = Number(getTotalPrice());
-      const minAmount = Number(voucher.minOrderAmount);
-
-      if (subtotal < minAmount) {
-        alert(`Đơn hàng tối thiểu ${minAmount.toLocaleString()}đ để dùng mã này!`);
-        return;
-      }
-
-      let discount = subtotal * (Number(voucher.discountPercent) / 100);
-      if (voucher.maxDiscountAmount) {
-        discount = Math.min(discount, Number(voucher.maxDiscountAmount));
-      }
-
-      setAppliedVoucher({ ...voucher, discount });
-      alert("Áp dụng mã giảm giá thành công!");
-    } catch (err) {
-      alert("Lỗi khi kiểm tra mã giảm giá");
-    }
+      return discount;
   };
+
+  const discountAmount = calculateDiscountAmount();
+  
+  // Tính điểm sử dụng (tối đa bằng số tiền đơn hàng hoặc số điểm hiện có)
+  useEffect(() => {
+    if (usePoints && user?.points > 0) {
+      // 1 điểm = 100đ. Tối đa dùng điểm sao cho tiền giảm <= subtotal - discountAmount + shippingFee
+      const maxPointsNeeded = Math.floor((subtotal - discountAmount + shippingFee) / 100);
+      const pointsToUse = Math.min(user.points, maxPointsNeeded);
+      setPointsUsed(pointsToUse > 0 ? pointsToUse : 0);
+    } else {
+      setPointsUsed(0);
+    }
+  }, [usePoints, user?.points, subtotal, discountAmount, shippingFee]);
+
+  const pointsDiscountAmount = pointsUsed * 100;
+  const finalTotal = subtotal + shippingFee - discountAmount - pointsDiscountAmount;
 
   const handlePlaceOrder = async (e) => {
     e.preventDefault();
     if (!user) return alert("Vui lòng đăng nhập!");
+    if (!shippingInfo.email) return alert("Vui lòng nhập email liên hệ!");
     if (!shippingInfo.address) return alert("Vui lòng nhập địa chỉ giao hàng!");
 
     setLoading(true);
     const orderDto = {
       clientId: user.id,
       shippingName: shippingInfo.fullName,
+      shippingEmail: shippingInfo.email,
       shippingPhone: shippingInfo.phone,
       shippingAddress: shippingInfo.address,
-      voucherCode: voucherCode,
-      items: cartItems.map(item => ({ 
-        productId: item.id, 
+      voucherCode: selectedVoucher ? selectedVoucher.code : null,
+      pointsUsed: pointsUsed,
+      items: cartItems.map(item => ({
+        productId: item.id,
         quantity: item.quantity,
         sizeName: item.selectedSize?.size,
         color: item.selectedColor
       }))
     };
-
     try {
       const res = await api.post('/orders', orderDto);
       const newOrder = res.data;
@@ -275,6 +279,11 @@ const Checkout = () => {
                 <label className="fw-bold small text-muted text-uppercase mb-2">Họ và tên người nhận</label>
                 <input type="text" className="luxury-input w-100" value={shippingInfo.fullName} 
                     onChange={e => setShippingInfo({...shippingInfo, fullName: e.target.value})} />
+              </div>
+              <div className="col-md-6">
+                <label className="fw-bold small text-muted text-uppercase mb-2">Email liên hệ</label>
+                <input type="email" className="luxury-input w-100" value={shippingInfo.email}
+                    onChange={e => setShippingInfo({...shippingInfo, email: e.target.value})} />
               </div>
               <div className="col-md-6">
                 <label className="fw-bold small text-muted text-uppercase mb-2">Số điện thoại</label>
@@ -360,33 +369,54 @@ const Checkout = () => {
 
                     {/* Voucher Section */}
                     <div className="mb-4">
-                        <label className="fw-bold small text-muted text-uppercase mb-2">MÃ GIẢM GIÁ (VOUCHER)</label>
-                        <div className="d-flex gap-2">
-                            <input type="text" className="luxury-input flex-grow-1" placeholder="NHẬP MÃ TẠI ĐÂY" 
-                                value={voucherCode} onChange={e => setVoucherCode(e.target.value.toUpperCase())} />
-                            <button className="luxury-button" style={{padding: '0 1.5rem'}} onClick={handleApplyVoucher}>ÁP DỤNG</button>
-                        </div>
+                        <VoucherSelector 
+                            subtotal={subtotal} 
+                            onSelect={(v) => setSelectedVoucher(v)} 
+                            selectedVoucher={selectedVoucher} 
+                        />
                     </div>
+
+                    {/* Loyalty Points Section */}
+                    {user?.points > 0 && (
+                        <div className="mb-4 p-3 border rounded-3 bg-light">
+                            <div className="form-check form-switch d-flex align-items-center justify-content-between p-0">
+                                <div>
+                                    <label className="form-check-label fw-bold" htmlFor="usePointsSwitch">
+                                        Dùng điểm tích lũy
+                                    </label>
+                                    <small className="d-block text-muted">Bạn có <strong className="text-warning">{user.points.toLocaleString()}</strong> điểm</small>
+                                </div>
+                                <input className="form-check-input ms-3 mt-0" type="checkbox" role="switch" id="usePointsSwitch" style={{width: '40px', height: '20px'}}
+                                    checked={usePoints} onChange={(e) => setUsePoints(e.target.checked)} />
+                            </div>
+                        </div>
+                    )}
 
                     <div className="space-y-3 mb-4">
                         <div className="d-flex justify-content-between text-muted">
                             <span>Tạm tính:</span>
-                            <span className="fw-bold">{getTotalPrice().toLocaleString()}đ</span>
+                            <span className="fw-bold">{subtotal.toLocaleString()}đ</span>
                         </div>
                         <div className="d-flex justify-content-between text-muted">
                             <span>Phí vận chuyển:</span>
                             <span className="fw-bold text-success">+{shippingFee?.toLocaleString()}đ</span>
                         </div>
-                        {appliedVoucher && (
+                        {discountAmount > 0 && (
                             <div className="d-flex justify-content-between text-danger">
-                                <span>Giảm giá (Voucher):</span>
-                                <span className="fw-bold">-{appliedVoucher.discount?.toLocaleString()}đ</span>
+                                <span>Giảm giá ({selectedVoucher.code}):</span>
+                                <span className="fw-bold">-{discountAmount.toLocaleString()}đ</span>
+                            </div>
+                        )}
+                        {pointsDiscountAmount > 0 && (
+                            <div className="d-flex justify-content-between text-warning">
+                                <span>Trừ điểm ({pointsUsed} điểm):</span>
+                                <span className="fw-bold">-{pointsDiscountAmount.toLocaleString()}đ</span>
                             </div>
                         )}
                         <hr className="my-3 border-light" />
                         <div className="d-flex justify-content-between h3 mb-0">
                             <span className="fw-black tracking-tighter">TỔNG CỘNG</span>
-                            <span className="fw-black text-dark">{(getTotalPrice() + shippingFee - (appliedVoucher?.discount || 0)).toLocaleString()}đ</span>
+                            <span className="fw-black text-dark">{finalTotal.toLocaleString()}đ</span>
                         </div>
                     </div>
 

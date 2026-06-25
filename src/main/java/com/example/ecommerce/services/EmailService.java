@@ -4,8 +4,11 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.mail.javamail.MimeMessageHelper;
 import org.springframework.stereotype.Service;
+
 import com.example.ecommerce.entities.Order;
 import com.example.ecommerce.entities.OrderItem;
+import com.example.ecommerce.entities.Voucher;
+
 import jakarta.mail.internet.MimeMessage;
 
 @Service
@@ -78,7 +81,10 @@ public class EmailService {
             "</div>" +
             "</body></html>";
 
-        sendHtmlEmail(order.getClient().getEmail(), subject, htmlBody);
+        String recipient = order.getShippingEmail() != null && !order.getShippingEmail().isBlank()
+                ? order.getShippingEmail()
+                : order.getClient().getEmail();
+        sendHtmlEmail(recipient, subject, htmlBody);
     }
 
     public void sendStatusUpdate(Order order) {
@@ -99,6 +105,83 @@ public class EmailService {
             "</div>" +
             "</body></html>";
 
-        sendHtmlEmail(order.getClient().getEmail(), subject, htmlBody);
+        String recipient = order.getShippingEmail() != null && !order.getShippingEmail().isBlank()
+                ? order.getShippingEmail()
+                : order.getClient().getEmail();
+        sendHtmlEmail(recipient, subject, htmlBody);
+    }
+
+    public void sendNewVoucherNotification(String email, Voucher voucher) {
+        String subject = "🎁 QUÀ TẶNG BẤT NGỜ: MÃ GIẢM GIÁ " + voucher.getCode() + " ĐÃ SẴN SÀNG!";
+        String htmlBody = "<html><body style='font-family: Arial, sans-serif;'>" +
+            "<div style='max-width: 600px; margin: 0 auto; border: 2px dashed #000; padding: 20px; text-align: center;'>" +
+            "  <h2 style='color: #d9534f;'>CHỈ DÀNH RIÊNG CHO BẠN!</h2>" +
+            "  <p>Sử dụng mã dưới đây để nhận ưu đãi cực khủng khi mua sắm tại <strong>Sporting Shop</strong>:</p>" +
+            "  <div style='background: #f4f4f4; padding: 15px; font-size: 24px; font-weight: bold; border: 1px solid #ddd; margin: 20px 0;'>" +
+            voucher.getCode() + "</div>" +
+            "  <p><strong>Ưu đãi:</strong> Giảm ngay " + voucher.getDiscountPercent() + "% cho đơn hàng từ " + String.format("%,.0f", voucher.getMinOrderAmount()) + "đ</p>" +
+            "  <p style='font-size: 12px; color: #777;'>*Hạn sử dụng đến: " + voucher.getExpiryDate().toString() + "</p>" +
+            "  <a href='http://localhost:3000' style='background: #000; color: #fff; padding: 10px 20px; text-decoration: none; font-weight: bold;'>MUA SẮM NGAY</a>" +
+            "</div>" +
+            "</body></html>";
+        sendHtmlEmail(email, subject, htmlBody);
+    }
+
+    public void sendLowStockWarning(com.example.ecommerce.entities.Product product, com.example.ecommerce.entities.ProductVariant variant, com.example.ecommerce.entities.ProductSize size) {
+        String adminEmail = "admin@sportingshop.com"; // Địa chỉ email của người quản lý kho/shop
+        String subject = "⚠️ CẢNH BÁO: SẢN PHẨM SẮP HẾT HÀNG!";
+        String htmlBody = "<html><body style='font-family: Arial, sans-serif;'>" +
+            "<div style='max-width: 600px; margin: 0 auto; border: 2px solid #d9534f; padding: 20px;'>" +
+            "  <h2 style='color: #d9534f; text-align: center;'>CẢNH BÁO SẢP HẾT HÀNG</h2>" +
+            "  <p>Hệ thống thông báo sản phẩm sau đây đã giảm xuống dưới mức cảnh báo tồn kho (<= 5):</p>" +
+            "  <ul>" +
+            "    <li><strong>Sản phẩm:</strong> " + product.getName() + "</li>" +
+            "    <li><strong>Màu sắc:</strong> " + variant.getColor() + "</li>" +
+            "    <li><strong>Size:</strong> " + size.getSize() + "</li>" +
+            "    <li><strong style='color: red;'>Tồn kho hiện tại: " + size.getQuantity() + "</strong></li>" +
+            "  </ul>" +
+            "  <p>Vui lòng kiểm tra và nhập thêm hàng trong thời gian sớm nhất.</p>" +
+            "</div>" +
+            "</body></html>";
+        
+        sendHtmlEmail(adminEmail, subject, htmlBody);
+    }
+
+    public void sendRefundNotification(Order order, Double amount, String method) {
+        String subject = "💸 XÁC NHẬN HOÀN TIỀN ĐƠN HÀNG #" + order.getId() + " - SPORTING SHOP";
+        
+        String methodText = "Chuyển khoản ngân hàng";
+        if ("LOYALTY_POINTS".equals(method)) {
+            methodText = "Hoàn điểm tích lũy";
+        } else if ("CASH".equals(method)) {
+            methodText = "Tiền mặt";
+        }
+
+        String htmlBody = "<html><body style='font-family: Arial, sans-serif; line-height: 1.6; color: #333;'>" +
+            "<div style='max-width: 600px; margin: 0 auto; border: 1px solid #ddd; border-top: 5px solid #000;'>" +
+            "  <div style='background: #000; color: #fff; padding: 20px; text-align: center;'>" +
+            "    <h1 style='margin: 0; text-transform: uppercase; letter-spacing: 2px;'>Sporting Shop</h1>" +
+            "  </div>" +
+            "  <div style='padding: 30px;'>" +
+            "    <h2>Chào " + order.getShippingName() + ",</h2>" +
+            "    <p>Chúng tôi xin thông báo yêu cầu hoàn trả cho đơn hàng <strong>#ORD-" + order.getId() + "</strong> đã được xử lý thành công.</p>" +
+            "    <div style='background: #f9f9f9; padding: 20px; margin: 20px 0; border-radius: 5px;'>" +
+            "      <h3 style='margin-top: 0;'>Thông tin hoàn tiền</h3>" +
+            "      <p style='margin: 5px 0;'><strong>Số tiền hoàn:</strong> <span style='color: green; font-weight: bold;'>" + String.format("%,.0f", amount) + "đ</span></p>" +
+            "      <p style='margin: 5px 0;'><strong>Phương thức hoàn tiền:</strong> " + methodText + "</p>" +
+            "      <p style='font-size: 12px; color: #666; margin-top: 10px;'>*Nếu là hình thức chuyển khoản, vui lòng đợi 1-3 ngày làm việc để tiền về tài khoản của bạn.</p>" +
+            "    </div>" +
+            "    <p>Cảm ơn bạn đã mua sắm tại <strong>Sporting Shop</strong>!</p>" +
+            "  </div>" +
+            "  <div style='background: #f1f1f1; padding: 20px; text-align: center; font-size: 12px; color: #999;'>" +
+            "    &copy; 2025 Sporting Shop - All Rights Reserved.<br>123 Đường Thể Thao, TP. Hồ Chí Minh" +
+            "  </div>" +
+            "</div>" +
+            "</body></html>";
+
+        String recipient = order.getShippingEmail() != null && !order.getShippingEmail().isBlank()
+                ? order.getShippingEmail()
+                : order.getClient().getEmail();
+        sendHtmlEmail(recipient, subject, htmlBody);
     }
 }

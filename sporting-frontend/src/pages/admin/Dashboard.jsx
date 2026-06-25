@@ -151,6 +151,15 @@ const AdminDashboard = () => {
                                 <Link to="/admin/users" className="btn btn-outline-info text-start">
                                     <FaUsers className="me-2"/> Phân quyền người dùng
                                 </Link>
+                                <Link to="/admin/analytics" className="btn btn-outline-success text-start">
+                                    <FaChartLine className="me-2"/> Phân tích doanh số
+                                </Link>
+                                <Link to="/admin/loyalty" className="btn btn-outline-warning text-start">
+                                    🎁 Chương trình thành viên
+                                </Link>
+                                <Link to="/admin/shipping" className="btn btn-outline-danger text-start">
+                                    🚚 Quản lý vận chuyển
+                                </Link>
                                 <div className="mt-3 p-3 bg-light rounded small text-muted">
                                     <FaClock className="me-2"/> <strong>Hệ thống:</strong> Hoạt động bình thường. Phiên bản 2.0 đã ổn định.
                                 </div>

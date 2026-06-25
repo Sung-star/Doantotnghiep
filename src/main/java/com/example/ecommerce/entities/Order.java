@@ -31,11 +31,14 @@ public class Order implements Serializable {
 
     private String shippingName;
     private String shippingPhone;
+    private String shippingEmail;
     private String shippingAddress;
     private Double shippingFee = 0.0; // Default shipping fee
 
     private String voucherCode;
     private Double discountAmount = 0.0; // Applied discount
+
+    private Integer pointsUsed = 0; // Loyalty points used
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "GMT")
     private Instant moment;
@@ -67,6 +70,8 @@ public class Order implements Serializable {
     public void setShippingName(String shippingName) { this.shippingName = shippingName; }
     public String getShippingPhone() { return shippingPhone; }
     public void setShippingPhone(String shippingPhone) { this.shippingPhone = shippingPhone; }
+    public String getShippingEmail() { return shippingEmail; }
+    public void setShippingEmail(String shippingEmail) { this.shippingEmail = shippingEmail; }
     public String getShippingAddress() { return shippingAddress; }
     public void setShippingAddress(String shippingAddress) { this.shippingAddress = shippingAddress; }
     public Instant getMoment() { return moment; }
@@ -95,6 +100,9 @@ public class Order implements Serializable {
 
     public Double getDiscountAmount() { return discountAmount; }
     public void setDiscountAmount(Double discountAmount) { this.discountAmount = discountAmount; }
+
+    public Integer getPointsUsed() { return pointsUsed; }
+    public void setPointsUsed(Integer pointsUsed) { this.pointsUsed = pointsUsed; }
 
     public Set<OrderItem> getItems() { return items; }
 
