@@ -2,8 +2,11 @@ package com.example.ecommerce.entities;
 
 import java.time.Instant;
 
+<<<<<<< HEAD
 import com.fasterxml.jackson.annotation.JsonIgnore;
 
+=======
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.FetchType;
@@ -14,6 +17,16 @@ import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
 
+<<<<<<< HEAD
+=======
+/**
+ * LoyaltyTransaction - Lịch sử giao dịch điểm thưởng
+ * EARN: Kiếm điểm từ mua hàng
+ * REDEEM: Dùng điểm đổi voucher
+ * REFUND: Hoàn điểm khi hủy đơn
+ * DEDUCT: Trừ điểm (admin)
+ */
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
 @Entity
 @Table(name = "loyalty_transactions")
 public class LoyaltyTransaction {
@@ -24,6 +37,7 @@ public class LoyaltyTransaction {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
+<<<<<<< HEAD
     @JsonIgnore  // <-- thêm dòng này
     private User user;
 
@@ -39,6 +53,27 @@ public class LoyaltyTransaction {
     @Column(length = 255)
     private String description;
 
+=======
+    private User user;
+
+    // EARN, REDEEM, REFUND, DEDUCT, BONUS
+    @Column(nullable = false, length = 20)
+    private String type;
+
+    // Số điểm thay đổi (dương = cộng, âm = trừ)
+    @Column(nullable = false)
+    private Long points;
+
+    // Điểm còn lại sau giao dịch
+    @Column(nullable = false)
+    private Long balanceAfter;
+
+    // Mô tả giao dịch (Đơn #123, Đổi voucher SUMMER20, v.v.)
+    @Column(length = 255)
+    private String description;
+
+    // Tham chiếu (orderId, voucherCode, ...)
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
     @Column(length = 100)
     private String referenceId;
 
@@ -57,6 +92,10 @@ public class LoyaltyTransaction {
         this.createdAt = Instant.now();
     }
 
+<<<<<<< HEAD
+=======
+    // Getters & Setters
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -80,4 +119,8 @@ public class LoyaltyTransaction {
 
     public Instant getCreatedAt() { return createdAt; }
     public void setCreatedAt(Instant createdAt) { this.createdAt = createdAt; }
+<<<<<<< HEAD
 }
+=======
+}
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97

@@ -69,7 +69,7 @@ const ScrollToTop = () => {
 
 const LayoutWrapper = ({ children }) => {
   const location = useLocation();
-  const isAuthPage  = location.pathname === '/login' || location.pathname === '/register';
+  const isAuthPage = location.pathname === '/login' || location.pathname === '/register';
   const isAdminPage = location.pathname.startsWith('/admin');
   return (
     <div className="d-flex flex-column min-vh-100">
@@ -92,66 +92,66 @@ function App() {
               <ScrollToTop />
               <LayoutWrapper>
                 <Routes>
-                {/* Public */}
-                <Route path="/" element={<SuspenseWrapper><Home /></SuspenseWrapper>} />
-                <Route path="/about" element={<SuspenseWrapper><About /></SuspenseWrapper>} />
-                <Route path="/products" element={<ProductList />} />
-                <Route path="/product/:id" element={<SuspenseWrapper><ProductDetail /></SuspenseWrapper>} />
-                <Route path="/cart" element={<SuspenseWrapper><Cart /></SuspenseWrapper>} />
-                <Route path="/checkout" element={<SuspenseWrapper><Checkout /></SuspenseWrapper>} />
-                <Route path="/wishlist" element={<SuspenseWrapper><Wishlist /></SuspenseWrapper>} />
-                <Route path="/men" element={<Navigate to="/products?category=Nam" replace />} />
-                <Route path="/women" element={<Navigate to="/products?category=Nữ" replace />} />
-                <Route path="/collections" element={<Navigate to="/products" replace />} />
+                  {/* Public */}
+                  <Route path="/" element={<SuspenseWrapper><Home /></SuspenseWrapper>} />
+                  <Route path="/about" element={<SuspenseWrapper><About /></SuspenseWrapper>} />
+                  <Route path="/products" element={<ProductList />} />
+                  <Route path="/product/:id" element={<SuspenseWrapper><ProductDetail /></SuspenseWrapper>} />
+                  <Route path="/cart" element={<SuspenseWrapper><Cart /></SuspenseWrapper>} />
+                  <Route path="/checkout" element={<SuspenseWrapper><Checkout /></SuspenseWrapper>} />
+                  <Route path="/wishlist" element={<SuspenseWrapper><Wishlist /></SuspenseWrapper>} />
+                  <Route path="/men" element={<Navigate to="/products?category=Nam" replace />} />
+                  <Route path="/women" element={<Navigate to="/products?category=Nữ" replace />} />
+                  <Route path="/collections" element={<Navigate to="/products" replace />} />
 
-                {/* ✅ MỚI */}
-                <Route path="/contact" element={<SuspenseWrapper><ContactPage /></SuspenseWrapper>} />
-                <Route path="/vouchers" element={<SuspenseWrapper><VoucherPage /></SuspenseWrapper>} />
+                  {/* ✅ MỚI */}
+                  <Route path="/contact" element={<SuspenseWrapper><ContactPage /></SuspenseWrapper>} />
+                  <Route path="/vouchers" element={<SuspenseWrapper><VoucherPage /></SuspenseWrapper>} />
 
-                {/* Support */}
-                <Route path="/support/return-policy" element={<SuspenseWrapper><ReturnPolicy /></SuspenseWrapper>} />
-                <Route path="/support/shipping" element={<SuspenseWrapper><Shipping /></SuspenseWrapper>} />
-                <Route path="/support/payment" element={<SuspenseWrapper><Payment /></SuspenseWrapper>} />
-                <Route path="/support/security" element={<SuspenseWrapper><Security /></SuspenseWrapper>} />
-                <Route path="/support/faq" element={<SuspenseWrapper><FAQ /></SuspenseWrapper>} />
+                  {/* Support */}
+                  <Route path="/support/return-policy" element={<SuspenseWrapper><ReturnPolicy /></SuspenseWrapper>} />
+                  <Route path="/support/shipping" element={<SuspenseWrapper><Shipping /></SuspenseWrapper>} />
+                  <Route path="/support/payment" element={<SuspenseWrapper><Payment /></SuspenseWrapper>} />
+                  <Route path="/support/security" element={<SuspenseWrapper><Security /></SuspenseWrapper>} />
+                  <Route path="/support/faq" element={<SuspenseWrapper><FAQ /></SuspenseWrapper>} />
 
-                {/* Auth */}
-                <Route path="/login" element={<SuspenseWrapper><Login /></SuspenseWrapper>} />
-                <Route path="/register" element={<SuspenseWrapper><Register /></SuspenseWrapper>} />
+                  {/* Auth */}
+                  <Route path="/login" element={<SuspenseWrapper><Login /></SuspenseWrapper>} />
+                  <Route path="/register" element={<SuspenseWrapper><Register /></SuspenseWrapper>} />
 
-                {/* Protected */}
-                <Route path="/profile" element={<ProtectedRoute><SuspenseWrapper><Profile /></SuspenseWrapper></ProtectedRoute>} />
-                <Route path="/orders" element={<ProtectedRoute><SuspenseWrapper><Orders /></SuspenseWrapper></ProtectedRoute>} />
-                <Route path="/loyalty" element={<ProtectedRoute><SuspenseWrapper><LoyaltyDashboard /></SuspenseWrapper></ProtectedRoute>} />
-                <Route path="/returns/:orderId" element={<ProtectedRoute><SuspenseWrapper><UserReturnRequest /></SuspenseWrapper></ProtectedRoute>} />
+                  {/* Protected */}
+                  <Route path="/profile" element={<ProtectedRoute><SuspenseWrapper><Profile /></SuspenseWrapper></ProtectedRoute>} />
+                  <Route path="/orders" element={<ProtectedRoute><SuspenseWrapper><Orders /></SuspenseWrapper></ProtectedRoute>} />
+                  <Route path="/loyalty" element={<ProtectedRoute><SuspenseWrapper><LoyaltyDashboard /></SuspenseWrapper></ProtectedRoute>} />
+                  <Route path="/returns/:orderId" element={<ProtectedRoute><SuspenseWrapper><UserReturnRequest /></SuspenseWrapper></ProtectedRoute>} />
 
-                {/* Admin */}
-                <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminLayout /></ProtectedRoute>}>
-                  <Route index element={<SuspenseWrapper><AdminDashboard /></SuspenseWrapper>} />
-                  <Route path="products" element={<SuspenseWrapper><AdminProducts /></SuspenseWrapper>} />
-                  <Route path="categories" element={<SuspenseWrapper><AdminCategories /></SuspenseWrapper>} />
-                  <Route path="orders" element={<SuspenseWrapper><AdminOrders /></SuspenseWrapper>} />
-                  <Route path="returns" element={<SuspenseWrapper><AdminReturns /></SuspenseWrapper>} />
-                  <Route path="users" element={<SuspenseWrapper><AdminUsers /></SuspenseWrapper>} />
-                  <Route path="payments" element={<SuspenseWrapper><AdminPayments /></SuspenseWrapper>} />
-                  <Route path="sizes" element={<SuspenseWrapper><AdminSizes /></SuspenseWrapper>} />
-                  <Route path="vouchers" element={<SuspenseWrapper><AdminVouchers /></SuspenseWrapper>} />
-                  <Route path="reviews" element={<SuspenseWrapper><AdminReviews /></SuspenseWrapper>} />
-                  <Route path="chat" element={<SuspenseWrapper><AdminChat /></SuspenseWrapper>} />
-                  <Route path="analytics" element={<SuspenseWrapper><AdminAnalytics /></SuspenseWrapper>} />
-                  <Route path="loyalty" element={<SuspenseWrapper><AdminLoyalty /></SuspenseWrapper>} />
-                  <Route path="shipping" element={<SuspenseWrapper><AdminShipping /></SuspenseWrapper>} />
-                </Route>
-                <Route path="/payment-result" element={<SuspenseWrapper><PaymentResult /></SuspenseWrapper>} />
+                  {/* Admin */}
+                  <Route path="/admin" element={<ProtectedRoute requiredRole="ADMIN"><AdminLayout /></ProtectedRoute>}>
+                    <Route index element={<SuspenseWrapper><AdminDashboard /></SuspenseWrapper>} />
+                    <Route path="products" element={<SuspenseWrapper><AdminProducts /></SuspenseWrapper>} />
+                    <Route path="categories" element={<SuspenseWrapper><AdminCategories /></SuspenseWrapper>} />
+                    <Route path="orders" element={<SuspenseWrapper><AdminOrders /></SuspenseWrapper>} />
+                    <Route path="returns" element={<SuspenseWrapper><AdminReturns /></SuspenseWrapper>} />
+                    <Route path="users" element={<SuspenseWrapper><AdminUsers /></SuspenseWrapper>} />
+                    <Route path="payments" element={<SuspenseWrapper><AdminPayments /></SuspenseWrapper>} />
+                    <Route path="sizes" element={<SuspenseWrapper><AdminSizes /></SuspenseWrapper>} />
+                    <Route path="vouchers" element={<SuspenseWrapper><AdminVouchers /></SuspenseWrapper>} />
+                    <Route path="reviews" element={<SuspenseWrapper><AdminReviews /></SuspenseWrapper>} />
+                    <Route path="chat" element={<SuspenseWrapper><AdminChat /></SuspenseWrapper>} />
+                    <Route path="analytics" element={<SuspenseWrapper><AdminAnalytics /></SuspenseWrapper>} />
+                    <Route path="loyalty" element={<SuspenseWrapper><AdminLoyalty /></SuspenseWrapper>} />
+                    <Route path="shipping" element={<SuspenseWrapper><AdminShipping /></SuspenseWrapper>} />
+                  </Route>
+                  <Route path="/payment-result" element={<SuspenseWrapper><PaymentResult /></SuspenseWrapper>} />
 
-                {/* 404 */}
-                <Route path="*" element={<NotFound />} />
-              </Routes>
-            </LayoutWrapper>
-          </Router>
-        </WishlistProvider>
-      </CartProvider>
-    </AuthProvider>
+                  {/* 404 */}
+                  <Route path="*" element={<NotFound />} />
+                </Routes>
+              </LayoutWrapper>
+            </Router>
+          </WishlistProvider>
+        </CartProvider>
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

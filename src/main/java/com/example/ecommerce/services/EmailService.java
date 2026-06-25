@@ -145,6 +145,7 @@ public class EmailService {
             "</body></html>";
         
         sendHtmlEmail(adminEmail, subject, htmlBody);
+<<<<<<< HEAD
     }
 
     public void sendRefundNotification(Order order, Double amount, String method) {
@@ -183,5 +184,7 @@ public class EmailService {
                 ? order.getShippingEmail()
                 : order.getClient().getEmail();
         sendHtmlEmail(recipient, subject, htmlBody);
+=======
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
     }
 }

@@ -76,6 +76,7 @@ private LoyaltyService loyaltyService;
     }
 
     @Transactional
+<<<<<<< HEAD
 public Order updateStatus(Long id, OrderStatus status) {
     Order order = repository.findById(id)
             .orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
@@ -86,6 +87,24 @@ public Order updateStatus(Long id, OrderStatus status) {
     if (status == OrderStatus.PAID && order.getPayment() == null) {
         Payment pay = new Payment(null, Instant.now(), order);
         order.setPayment(pay);
+=======
+    public Order updateStatus(Long id, OrderStatus status) {
+        Order order = repository.findById(id).orElseThrow(() -> new RuntimeException("Đơn hàng không tồn tại"));
+        order.setOrderStatus(status);
+        if (status == OrderStatus.PAID && order.getPayment() == null) {
+            Payment pay = new Payment(null, Instant.now(), order);
+            order.setPayment(pay);
+        }
+        order = repository.save(order);
+        
+        // CỘNG ĐIỂM KHI ĐƠN HÀNG HOÀN THÀNH (DELIVERED)
+        // NOTE: Loyalty points are now handled by LoyaltyService triggered from updateStatus()
+        
+        // Trigger status update email
+        emailService.sendStatusUpdate(order);
+        
+        return order;
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
     }
     
     order = repository.save(order);
@@ -157,12 +176,21 @@ System.out.println(">>> [DEBUG] items count=" + order.getItems().size());
         // XỬ LÝ DÙNG ĐIỂM (LOYALTY POINTS)
         // NOTE: Loyalty points are now managed by LoyaltyService, not User.points
         Integer pointsUsed = dto.getPointsUsed() != null ? dto.getPointsUsed() : 0;
+<<<<<<< HEAD
 if (pointsUsed > 0) {
     loyaltyService.deductPoints(dto.getClientId(), pointsUsed.longValue());
     order.setPointsUsed(pointsUsed);
 } else {
     order.setPointsUsed(0);
 }
+=======
+        if (pointsUsed > 0) {
+            // TODO: Verify points through LoyaltyService before placing order
+            order.setPointsUsed(pointsUsed);
+        } else {
+            order.setPointsUsed(0);
+        }
+>>>>>>> bdc2f698b6fb92ee5be00fd643f7a03b92e99d97
 
         // Lưu Order trước để có ID
         order = repository.save(order);

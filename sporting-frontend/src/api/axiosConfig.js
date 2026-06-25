@@ -2,7 +2,7 @@ import axios from 'axios';
 
 const api = axios.create({
   // Thêm /api nếu backend của bạn có prefix này
-  baseURL: 'http://127.0.0.1:8081/api', 
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://127.0.0.1:8081/api',
   headers: {
     'Content-Type': 'application/json',
   }
