@@ -24,8 +24,11 @@
 *   **Thanh toán đa dạng**:
     *   Thanh toán khi nhận hàng (COD).
     *   Tích hợp cổng thanh toán trực tuyến **VNPAY** và ví điện tử **MoMo**.
-*   **Ưu đãi thông minh (Voucher Selector)**: Áp dụng mã giảm giá trực quan ngay tại bước thanh toán.
+*   **Ưu đãi thông minh & Danh sách Voucher**: 
+    *   Trang danh sách Voucher (`/vouchers`) hiển thị trực quan các mã giảm giá đang hoạt động.
+    *   Áp dụng mã giảm giá trực quan (Voucher Selector) ngay tại bước thanh toán.
 *   **Hệ thống Địa chỉ chi tiết**: Tích hợp danh mục địa lý hành chính Việt Nam (Tỉnh/Thành phố, Quận/Huyện, Phường/Xã) và tính toán phí vận chuyển linh hoạt theo địa điểm nhận hàng.
+*   **Trang Liên hệ (Contact)**: Hỗ trợ khách hàng gửi thông tin liên hệ và phản hồi dễ dàng (`/contact`).
 *   **Hỗ trợ trực tuyến**: Chatbox thời gian thực với Admin qua WebSocket và trung tâm hỗ trợ khách hàng (FAQ, Chính sách đổi trả, Bảo mật).
 
 ### 🛡️ 2. Hệ thống Quản trị viên (Admin Dashboard)
@@ -38,6 +41,14 @@
 *   **Quản lý Khuyến mãi (Voucher Manager)**: Tạo mã giảm giá, giới hạn số lần sử dụng, thiết lập thời gian hiệu lực.
 *   **Quản lý Đánh giá (Reviews Manager)**: Xem và duyệt các đánh giá, bình luận của khách hàng về sản phẩm.
 *   **Hỗ trợ Khách hàng Real-time (Admin Chat)**: Nhận tin nhắn và tư vấn trực tiếp cho khách hàng đang trực tuyến qua giao diện Chat chuyên nghiệp.
+
+### 🔄 3. Hệ thống Trả hàng & Đổi hàng (Return & Exchange System)
+*   **Gửi Yêu cầu Đổi trả (Client)**: Cho phép khách hàng gửi yêu cầu Trả hàng - Hoàn tiền (RETURN) hoặc Đổi size/mẫu (EXCHANGE) trực tiếp từ giao diện lịch sử mua hàng đối với các đơn đã giao thành công (`DELIVERED`/`COMPLETED`).
+*   **Phê duyệt & Từ chối (Admin)**: Giao diện quản trị yêu cầu đổi trả tập trung, giúp Admin xét duyệt lý do đổi trả nhanh chóng.
+*   **Tự động hoàn kho & xử lý điểm thưởng**:
+    *   **Hoàn kho**: Tự động cộng lại số lượng sản phẩm hoàn trả vào kho hàng tương ứng (`ProductSize`).
+    *   **Loyalty Points**: Tự động khấu trừ số điểm tích lũy khách hàng nhận được từ đơn hoàn trả, và hoàn lại số điểm tích lũy khách hàng đã dùng để thanh toán đơn hàng đó.
+    *   **Email tự động**: Gửi thông báo phê duyệt và xác nhận hoàn tiền chi tiết tới Email khách hàng.
 
 ---
 
@@ -71,9 +82,9 @@ Doantotnghiep/
 ├── src/main/java/com/example/ecommerce/          # BACKEND SOURCE CODE
 │   ├── config/                                    # Cấu hình Spring Security, WebSocket, VNPay, Mail, Async
 │   ├── controllers/                               # REST Controllers xử lý API bổ sung (Admin Loyalty,...)
-│   ├── resources/                                 # REST Controllers chính (Address, Product, Order, Chat, Search,...)
-│   ├── entities/                                  # JPA Entities (User, Product, Order, Loyalty, ChatMessage,...)
-│   ├── services/                                  # Business Logic (OrderService, LoyaltyService, GeminiService,...)
+│   ├── resources/                                 # REST Controllers chính (Address, Product, Order, Chat, Search, Returns...)
+│   ├── entities/                                  # JPA Entities (User, Product, Order, Loyalty, ChatMessage, ReturnRequest...)
+│   ├── services/                                  # Business Logic (OrderService, LoyaltyService, GeminiService, ReturnRequestService...)
 │   ├── specifications/                            # Lọc dữ liệu động nâng cao (JPA Specification)
 │   └── dto/                                       # Data Transfer Objects
 │
@@ -83,16 +94,17 @@ Doantotnghiep/
 │   │   ├── components/                            # Components dùng chung (Navbar, Footer, ProtectedRoute,...)
 │   │   ├── contexts/                              # Quản lý State toàn cục (Auth, Cart, Wishlist, Theme)
 │   │   ├── pages/                                 # Giao diện các trang
-│   │   │   ├── admin/                             # Trang quản trị (Analytics, Chat, Orders, Products, Vouchers,...)
+│   │   │   ├── admin/                             # Trang quản trị (Analytics, Chat, Orders, Products, Vouchers, Returns...)
 │   │   │   ├── auth/                              # Trang đăng ký, đăng nhập
 │   │   │   ├── support/                           # Trang hỗ trợ chính sách (Shipping, Payment, ReturnPolicy, FAQ)
-│   │   │   └── user/                              # Trang khách hàng (Home, Cart, Checkout, Profile, Orders, Loyalty,...)
+│   │   │   └── user/                              # Trang khách hàng (Home, Cart, Checkout, Profile, Orders, Loyalty, ReturnRequest, Contactpage, Voucherpage...)
 │   │   ├── styles/                                # File CSS tùy chỉnh (index.css, Luxury Design System)
 │   │   ├── App.jsx                                # Cấu hình Routing & Context Providers
 │   │   └── main.jsx                               # Entrypoint của React App
 │   └── package.json                               # Dependencies & scripts của frontend
 │
 ├── .env.properties                                # Biến môi trường chạy local (Database, API Keys, SMTP Mail, VNPAY)
+├── My workflow 2.json                             # Cấu hình n8n Workflow Chatbot AI
 ├── pom.xml                                        # Maven Dependencies
 └── README.md                                      # Tài liệu hướng dẫn dự án
 ```
@@ -119,7 +131,7 @@ DB_PASSWORD=
 JWT_SECRET=your_super_secret_key_change_this
 
 # Cấu hình Google Gemini AI
-GEMINI_API_KEY=Ab8RN6LBUFnh3DUuGpymL8N_Uhm7wdP0vnaL0-Z7KbW1HEO8ag
+GEMINI_API_KEY=your_key_gemini
 
 # Cấu hình Cổng thanh toán VNPAY (nếu có)
 VNPAY_TMN_CODE=your_vnpay_code
@@ -186,6 +198,14 @@ npm run dev
 2. API backend gửi yêu cầu kèm Prompt định hướng tới Gemini AI: *"Bạn là trợ lý bán hàng chuyên biệt cho cửa hàng Adidas. Hãy phân tích yêu cầu tìm kiếm của khách hàng và chuyển nó thành JSON..."*
 3. Gemini AI phản hồi dạng chuỗi JSON chứa các bộ lọc: `keyword`, `minPrice`, `maxPrice`, `color`, `brand`, `size`.
 4. Backend parse chuỗi JSON này, nạp vào JPA Specification để xây dựng câu lệnh SQL tìm kiếm động trên cơ sở dữ liệu MySQL và trả kết quả phân trang về cho client hiển thị.
+
+---
+
+## 🤖 Tích hợp n8n Workflow (Chatbot AI)
+Dự án cung cấp sẵn cấu hình n8n Workflow tại file `My workflow 2.json` ở thư mục gốc để triển khai Chatbot AI tự động:
+1. **Webhook**: Endpoint `/chat` nhận tin nhắn trò chuyện của khách hàng.
+2. **AI Agent (Google Gemini)**: Sử dụng mô hình `gemini-2.5-flash` đóng vai trò là nhân viên tư vấn vui vẻ, thân thiện của cửa hàng Adidas.
+3. **Logic phản hồi**: Phân tích danh sách sản phẩm và tự động trả về định dạng thẻ đặc biệt `[PRODUCT: ID|Tên|Giá|URL_Ảnh]` ở cuối câu trả lời để giao diện client (khung chat) render khung sản phẩm chi tiết và đẹp mắt, tăng trải nghiệm người dùng.
 
 ---
 
